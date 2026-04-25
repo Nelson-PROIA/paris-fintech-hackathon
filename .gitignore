@@ -15,6 +15,13 @@ next-env.d.ts
 *.tsbuildinfo
 .turbo
 
+# local data (SQLite + uploaded collateral files — never commit user data)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+data/uploads/
+
 # os
 .DS_Store
 *.log
