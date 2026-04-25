@@ -7,8 +7,9 @@ import { cn } from "@/lib/utils";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "SMB ↔ Investor Marketplace",
-  description: "AI-powered marketplace connecting European SMBs with investors.",
+  title: "Loanly — AI-native marketplace for European SMBs and investors",
+  description:
+    "Loanly matches European SMBs raising capital with thesis-driven investors. AI-powered onboarding, due diligence, portfolio construction, and collateral verification.",
 };
 
 export default function RootLayout({

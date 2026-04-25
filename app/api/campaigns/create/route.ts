@@ -25,19 +25,19 @@ const InputSchema = z.object({
 });
 
 const NEED_LABELS: Record<string, string> = {
-  invoice_advance: "Avance sur factures",
-  working_capital: "BFR",
-  stock_purchase: "Achat de stock",
-  supplier_payment: "Paiement fournisseur",
-  payroll: "Salaires",
-  short_invest: "Investissement court",
-  other: "Besoin",
+  invoice_advance: "Invoice factoring",
+  working_capital: "Working capital",
+  stock_purchase: "Inventory purchase",
+  supplier_payment: "Supplier payment",
+  payroll: "Payroll",
+  short_invest: "Short-term investment",
+  other: "Funding",
 };
 
 const URGENCY_LABEL: Record<string, string> = {
-  very_urgent: "très urgent",
-  this_week: "cette semaine",
-  this_month: "ce mois",
+  very_urgent: "very urgent",
+  this_week: "this week",
+  this_month: "this month",
   flexible: "flexible",
 };
 
@@ -88,11 +88,11 @@ export async function POST(req: Request) {
   };
 
   const primaryNeed = need.data.needs[0];
-  const niceNeed = NEED_LABELS[primaryNeed] ?? "Financement";
-  const title = `${niceNeed} — ${formatEur(need.data.amount_eur)} sur ${need.data.duration_days} j`;
+  const niceNeed = NEED_LABELS[primaryNeed] ?? "Funding";
+  const title = `${niceNeed} — ${formatEur(need.data.amount_eur)} over ${need.data.duration_days}d`;
   const useOfFunds = `${need.data.needs
     .map((n) => NEED_LABELS[n] ?? n)
-    .join(", ")} · urgence ${URGENCY_LABEL[need.data.urgency]} · ${need.data.duration_days} jours.`;
+    .join(", ")} · ${URGENCY_LABEL[need.data.urgency]} · ${need.data.duration_days} days.`;
 
   const campaign = createCampaign({
     company_id: companyId,
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
 }
 
 function formatEur(n: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,

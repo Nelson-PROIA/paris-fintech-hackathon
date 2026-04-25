@@ -21,11 +21,11 @@ export default async function HomePage() {
       <header className="glass-strong sticky top-0 z-40 border-b border-border/60">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-            <span className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-brand text-[11px] font-bold text-brand-foreground shadow-soft">
+            <span className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-brand text-[12px] font-bold text-brand-foreground shadow-soft">
               <span className="absolute inset-0 rounded-lg ring-1 ring-inset ring-white/30" />
-              <span className="relative">C/M</span>
+              <span className="relative">L</span>
             </span>
-            <span>Capital<span className="text-brand">/</span>Match</span>
+            <span>Loanly</span>
           </div>
           <div className="flex items-center gap-2">
             <SignInButton mode="modal">
@@ -173,7 +173,7 @@ export default async function HomePage() {
 
       <footer className="border-t border-border/60 py-10">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 text-xs text-muted-foreground">
-          <span>© Capital/Match — Paris Fintech Hackathon</span>
+          <span>© Loanly — Paris Fintech Hackathon</span>
           <span>Built with Mistral Large · Next.js 15 · Clerk</span>
         </div>
       </footer>

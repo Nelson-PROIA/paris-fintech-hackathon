@@ -27,7 +27,7 @@ export function TopNav({ role }: { role: "smb" | "investor" }) {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
             <BrandMark />
-            <span>Capital<span className="text-brand">/</span>Match</span>
+            <span>Loanly</span>
           </Link>
           <ul className="flex items-center gap-1 text-sm">
             {links.map((l) => {
@@ -66,9 +66,9 @@ export function TopNav({ role }: { role: "smb" | "investor" }) {
 
 function BrandMark() {
   return (
-    <span className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-brand text-[11px] font-bold text-brand-foreground shadow-soft">
+    <span className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-brand text-[12px] font-bold text-brand-foreground shadow-soft">
       <span className="absolute inset-0 rounded-lg ring-1 ring-inset ring-white/30" />
-      <span className="relative">C/M</span>
+      <span className="relative">L</span>
     </span>
   );
 }

@@ -1,4 +1,4 @@
-# Capital/Match — SMB ↔ Investor Marketplace × AI
+# Loanly — SMB ↔ Investor Marketplace × AI
 
 > **Capital, finally routed to Europe's real economy.**
 > An AI-native marketplace that matches non-tech European SMBs raising capital with thesis-driven angels, family offices, and search funds — with due diligence, matching, and collateral verification built in.
@@ -248,7 +248,7 @@ Every product decision serves this. Time on stage: ~3 minutes.
 ## Devpost — submission copy
 
 **Title**
-> Capital/Match — AI-native marketplace for European SMBs and thesis-driven investors
+> Loanly — AI-native marketplace for European SMBs and thesis-driven investors
 
 **Tagline (≤ 200 chars)**
 > Mistral-powered marketplace that matches non-tech European SMBs raising capital with the right investors. AI does the sourcing, the DD, the portfolio construction, and the collateral verification.
@@ -260,7 +260,7 @@ Every product decision serves this. Time on stage: ~3 minutes.
 > 25 million European SMBs are economic engines invisible to AngelList — agencies, makers, manufacturers, B2B services. They raise €50k–500k tickets from regional angels and family offices, who themselves can't deploy at scale without 50 hours of analyst work per deal. AI changes that economics.
 
 **What it does**
-> Capital/Match is a two-sided marketplace where founders onboard via a conversation (no 50-field form), each deal ships with an AI-generated DD brief sourced from web + registry + the company's own site, big-ticket investors get fractionalised portfolios across 10–20 SMBs in seconds, and collateral uploaded as PDFs is automatically verified. AI is on every screen.
+> Loanly is a two-sided marketplace where founders onboard via a conversation (no 50-field form), each deal ships with an AI-generated DD brief sourced from web + registry + the company's own site, big-ticket investors get fractionalised portfolios across 10–20 SMBs in seconds, and collateral uploaded as PDFs is automatically verified. AI is on every screen.
 
 **How we built it**
 > Next.js 15 App Router, Vercel AI SDK v6 with Mistral Large 2 (and Cerebras Llama 3.3 70B as automatic fallback), tool-calling agent for DD with Tavily web search and SIRENE registry lookup, Zod-validated structured outputs for every LLM call, SQLite for everything (companies + campaigns + collaterals + dd_briefs + ratings), Clerk for auth, shadcn/ui for the polish.
@@ -285,7 +285,7 @@ Every product decision serves this. Time on stage: ~3 minutes.
 hack-mvp/
 ├── app/
 │   ├── layout.tsx                       # Clerk provider, Tailwind v4
-│   ├── page.tsx                         # Landing (Capital/Match brand)
+│   ├── page.tsx                         # Landing (Loanly brand)
 │   ├── (smb)/                           # SMB-only routing group
 │   │   ├── dashboard/page.tsx           # Owned companies + campaigns
 │   │   └── onboard/                     # Conversational onboarding
