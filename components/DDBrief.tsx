@@ -1,15 +1,19 @@
 import type { DDBrief } from "@/lib/ai/dd-analyst";
+import { Badge } from "@/components/ui/badge";
 
-const SEVERITY_TEXT: Record<DDBrief["riskFlags"][number]["severity"], string> = {
+const SEVERITY_LABEL: Record<DDBrief["riskFlags"][number]["severity"], string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
 };
 
-const SEVERITY_DOT: Record<DDBrief["riskFlags"][number]["severity"], string> = {
-  low: "bg-emerald-500",
-  medium: "bg-amber-500",
-  high: "bg-rose-500",
+const SEVERITY_VARIANT: Record<
+  DDBrief["riskFlags"][number]["severity"],
+  "success" | "warning" | "danger"
+> = {
+  low: "success",
+  medium: "warning",
+  high: "danger",
 };
 
 export function DDBriefView({
@@ -22,70 +26,87 @@ export function DDBriefView({
   cached: boolean;
 }) {
   return (
-    <article className="space-y-6 rounded-lg border border-border p-6">
-      <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-4">
+    <article className="surface relative overflow-hidden p-6">
+      <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand/5 blur-3xl" />
+      <header className="relative flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h2 className="text-xl font-semibold">DD brief</h2>
+          <Badge variant="brand">
+            <Spark /> AI due diligence
+          </Badge>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+            One-page brief
+          </h2>
           <p className="text-xs text-muted-foreground">
             {cached ? "cached" : "fresh"} · generated {fmtTime(generatedAt)}
           </p>
         </div>
-        <SentimentPill score={brief.sentimentScore} />
+        <SentimentGauge score={brief.sentimentScore} />
       </header>
 
-      <Section title="Overview" body={brief.overview} />
-      <Section title="Traction" body={brief.traction} />
-      <Section title="Team" body={brief.team} />
-      <Section title="Market context" body={brief.marketContext} />
+      <div className="relative mt-6 grid gap-5 md:grid-cols-2">
+        <Section title="Overview" body={brief.overview} icon="📌" wide />
+        <Section title="Traction" body={brief.traction} icon="📈" />
+        <Section title="Team" body={brief.team} icon="👥" />
+        <Section title="Market context" body={brief.marketContext} icon="🌍" wide />
+      </div>
 
-      <section>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Risk flags ({brief.riskFlags.length})
-        </h3>
+      <section className="relative mt-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Risk flags
+          </h3>
+          <span className="text-xs text-muted-foreground">
+            {brief.riskFlags.length}{" "}
+            {brief.riskFlags.length === 1 ? "flag" : "flags"} surfaced
+          </span>
+        </div>
         {brief.riskFlags.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
-            No material risks surfaced from this pass.
-          </p>
+          <div className="mt-2 rounded-lg border border-success/30 bg-success/5 p-3 text-sm text-success">
+            ✓ No material risks surfaced from this pass.
+          </div>
         ) : (
-          <ul className="mt-2 space-y-3">
+          <ul className="mt-3 grid gap-2 md:grid-cols-2">
             {brief.riskFlags.map((rf, i) => (
               <li
                 key={i}
-                className="flex items-start gap-3 rounded-md border border-border p-3"
+                className="rounded-lg border border-border bg-card/60 p-3"
               >
-                <span
-                  className={`mt-1 block h-2.5 w-2.5 shrink-0 rounded-full ${SEVERITY_DOT[rf.severity]}`}
-                  aria-label={SEVERITY_TEXT[rf.severity]}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    {rf.flag}
-                    <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {SEVERITY_TEXT[rf.severity]}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {rf.evidence}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant={SEVERITY_VARIANT[rf.severity]}>
+                    {SEVERITY_LABEL[rf.severity]}
+                  </Badge>
+                  <span className="text-sm font-medium">{rf.flag}</span>
                 </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  {rf.evidence}
+                </p>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Sources ({brief.evidence.length})
-        </h3>
+      <section className="relative mt-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Sources
+          </h3>
+          <span className="text-xs text-muted-foreground">
+            {brief.evidence.length}{" "}
+            {brief.evidence.length === 1 ? "source" : "sources"} cited
+          </span>
+        </div>
         {brief.evidence.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">
             No external sources cited.
           </p>
         ) : (
-          <ul className="mt-2 space-y-2 text-sm">
+          <ul className="mt-3 space-y-2">
             {brief.evidence.map((e, i) => (
-              <li key={i} className="rounded-md border border-border p-3">
+              <li
+                key={i}
+                className="rounded-lg border border-border bg-card/60 p-3 text-sm transition hover:border-brand/40"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{e.source}</span>
                   {e.url && (
@@ -93,13 +114,13 @@ export function DDBriefView({
                       href={e.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                      className="text-xs text-brand underline-offset-2 hover:underline"
                     >
                       {hostname(e.url)} ↗
                     </a>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                   {e.excerpt}
                 </p>
               </li>
@@ -111,10 +132,23 @@ export function DDBriefView({
   );
 }
 
-function Section({ title, body }: { title: string; body: string }) {
+function Section({
+  title,
+  body,
+  icon,
+  wide,
+}: {
+  title: string;
+  body: string;
+  icon: string;
+  wide?: boolean;
+}) {
   return (
-    <section>
-      <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+    <section
+      className={`rounded-lg border border-border bg-card/40 p-4 ${wide ? "md:col-span-2" : ""}`}
+    >
+      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <span aria-hidden>{icon}</span>
         {title}
       </h3>
       <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{body}</p>
@@ -122,20 +156,63 @@ function Section({ title, body }: { title: string; body: string }) {
   );
 }
 
-function SentimentPill({ score }: { score: number }) {
+function SentimentGauge({ score }: { score: number }) {
   const tone =
     score >= 70
-      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+      ? { ring: "stroke-success", text: "text-success", label: "Strong" }
       : score >= 40
-        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-        : "bg-rose-500/15 text-rose-700 dark:text-rose-400";
+        ? { ring: "stroke-warning", text: "text-warning", label: "Mixed" }
+        : { ring: "stroke-destructive", text: "text-destructive", label: "Cautious" };
+  const r = 30;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100);
   return (
-    <span
-      className={`rounded-full px-3 py-1 text-sm font-medium ${tone}`}
-      title="0-100 confidence score"
-    >
-      Sentiment {score}
-    </span>
+    <div className="flex items-center gap-3">
+      <div className="relative">
+        <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90">
+          <circle
+            cx="40"
+            cy="40"
+            r={r}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="6"
+            className="text-border"
+          />
+          <circle
+            cx="40"
+            cy="40"
+            r={r}
+            fill="none"
+            strokeWidth="6"
+            strokeLinecap="round"
+            className={`transition-all duration-700 ${tone.ring}`}
+            strokeDasharray={c}
+            strokeDashoffset={offset}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className={`text-lg font-semibold tabular-nums ${tone.text}`}>
+            {score}
+          </span>
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
+            sentiment
+          </span>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className={`text-sm font-semibold ${tone.text}`}>{tone.label}</div>
+        <div className="text-xs text-muted-foreground">conviction</div>
+      </div>
+    </div>
+  );
+}
+
+function Spark() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
+    </svg>
   );
 }
 

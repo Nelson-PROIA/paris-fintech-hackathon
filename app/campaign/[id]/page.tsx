@@ -9,6 +9,9 @@ import {
 } from "@/lib/db";
 import { DDSection } from "@/components/DDSection";
 import { RatingWidget } from "@/components/RatingWidget";
+import { Badge } from "@/components/ui/badge";
+import { SectorIcon } from "@/components/ui/sector-icon";
+import { fmtEur, fmtEurExact, flagFor } from "@/lib/format";
 import type { DDBrief } from "@/lib/ai/dd-analyst";
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
@@ -54,123 +57,140 @@ export default async function CampaignPage({
     user.type === "investor" ? getCachedDDBrief(co.id) : null;
   const ratings = listRatingsForUser(co.user_id);
 
+  const statusVariant =
+    camp.status === "open"
+      ? "success"
+      : camp.status === "funded"
+        ? "brand"
+        : "default";
+
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-5xl px-6 py-10">
       <Link
         href={backHref}
-        className="text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
-        ← Back to {user.type === "investor" ? "feed" : "dashboard"}
+        <span aria-hidden>←</span>
+        Back to {user.type === "investor" ? "feed" : "dashboard"}
       </Link>
 
-      <header className="mt-6 space-y-2">
-        <Link
-          href={`/company/${co.id}`}
-          className="text-sm text-muted-foreground underline-offset-2 hover:underline"
-        >
-          {co.name}
-        </Link>
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight">
-            {camp.title}
-          </h1>
-          <div className="flex items-center gap-2">
-            <span
-              className={
-                camp.status === "open"
-                  ? "rounded-full bg-emerald-500/15 px-3 py-0.5 text-xs text-emerald-700 dark:text-emerald-400"
-                  : camp.status === "funded"
-                    ? "rounded-full bg-sky-500/15 px-3 py-0.5 text-xs text-sky-700 dark:text-sky-400"
-                    : "rounded-full bg-secondary px-3 py-0.5 text-xs text-muted-foreground"
-              }
-            >
-              {camp.status}
-            </span>
-            {co.rating_count > 0 && (
-              <span className="rounded-full bg-secondary px-3 py-0.5 text-xs">
-                ★ {co.rating_avg.toFixed(1)} ({co.rating_count})
-              </span>
-            )}
-            {isOwner && (
-              <span className="rounded-full border border-border px-3 py-0.5 text-xs text-muted-foreground">
-                Your campaign
-              </span>
-            )}
+      {/* Hero */}
+      <section className="surface relative mt-5 overflow-hidden p-8">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-20" />
+        <div className="relative flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-4">
+              <SectorIcon sector={co.sector} size="lg" />
+              <div>
+                <Link
+                  href={`/company/${co.id}`}
+                  className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  {co.name}
+                </Link>
+                <h1 className="mt-1 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
+                  {camp.title}
+                </h1>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              <Badge variant={statusVariant}>
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                    camp.status === "open"
+                      ? "bg-success animate-pulse-soft"
+                      : "bg-current"
+                  }`}
+                />
+                {camp.status}
+              </Badge>
+              {co.sector && <Badge variant="brand">{co.sector}</Badge>}
+              {co.stage && <Badge>{co.stage}</Badge>}
+              <Badge variant="ghost">
+                {flagFor(co.country)} {co.country ?? "—"}
+                {co.city ? ` · ${co.city}` : ""}
+              </Badge>
+              {co.rating_count > 0 && (
+                <Badge variant="warning">
+                  ★ {co.rating_avg.toFixed(1)} ({co.rating_count})
+                </Badge>
+              )}
+              {isOwner && <Badge variant="outline">Your campaign</Badge>}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Capital seeking
+            </div>
+            <div className="gradient-text text-4xl font-semibold tracking-tight tabular-nums md:text-5xl">
+              {fmtEur(camp.capital_seeking_eur)}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground tabular-nums">
+              {fmtEurExact(camp.capital_seeking_eur)}
+            </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          {co.sector && <Tag>{co.sector}</Tag>}
-          {co.stage && <Tag>{co.stage}</Tag>}
-          {co.country && <Tag>{co.country}</Tag>}
-          {co.city && <Tag>{co.city}</Tag>}
-        </div>
-      </header>
+      </section>
 
-      <section className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg border border-border p-5 sm:grid-cols-3">
-        <Field label="Capital seeking" value={fmtEur(camp.capital_seeking_eur)} />
-        <Field label="Founded" value={co.founded_year?.toString() ?? "—"} />
-        <Field label="Team size" value={co.team_size?.toString() ?? "—"} />
-        <Field
+      {/* Stats grid */}
+      <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Founded" value={co.founded_year?.toString() ?? "—"} />
+        <Stat label="Team size" value={co.team_size?.toString() ?? "—"} />
+        <Stat
           label="MRR"
-          value={
-            co.monthly_revenue_eur ? fmtEur(co.monthly_revenue_eur) : "—"
-          }
+          value={co.monthly_revenue_eur ? fmtEur(co.monthly_revenue_eur) : "—"}
         />
-        <Field
+        <Stat
           label="Burn / mo"
           value={co.monthly_burn_eur ? fmtEur(co.monthly_burn_eur) : "—"}
         />
-        <Field
-          label="Website"
-          value={
-            co.website ? (
-              <a
-                href={co.website}
-                target="_blank"
-                rel="noreferrer"
-                className="underline-offset-2 hover:underline"
-              >
-                {co.website.replace(/^https?:\/\//, "")}
-              </a>
-            ) : (
-              "—"
-            )
-          }
-        />
       </section>
 
-      <section className="mt-6 rounded-lg border border-border p-5">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Use of funds
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed">{camp.use_of_funds}</p>
-      </section>
-
-      {camp.pitch_summary && (
-        <section className="mt-6 rounded-lg border border-border p-5">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Pitch
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed">{camp.pitch_summary}</p>
+      {co.website && (
+        <section className="mt-3">
+          <a
+            href={co.website}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-brand underline-offset-2 hover:underline"
+          >
+            🌐 {co.website.replace(/^https?:\/\//, "")} ↗
+          </a>
         </section>
       )}
 
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <PanelSection title="Use of funds" icon="🎯">
+          {camp.use_of_funds}
+        </PanelSection>
+        {camp.pitch_summary && (
+          <PanelSection title="Pitch" icon="📣">
+            {camp.pitch_summary}
+          </PanelSection>
+        )}
+      </div>
+
+      {/* Collateral */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold">
-            Collateral ({collaterals.length})
+          <h2 className="text-lg font-semibold tracking-tight">
+            Collateral{" "}
+            <span className="text-sm text-muted-foreground">
+              ({collaterals.length})
+            </span>
           </h2>
           {isOwner && (
             <Link
               href={`/campaign/${camp.id}/manage`}
-              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+              className="text-xs text-brand underline-offset-2 hover:underline"
             >
               + Add collateral
             </Link>
           )}
         </div>
         {collaterals.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             No collateral on file.
           </p>
         ) : (
@@ -187,11 +207,11 @@ export default async function CampaignPage({
               return (
                 <li
                   key={c.id}
-                  className="space-y-2 rounded-md border border-border px-4 py-3 text-sm"
+                  className="surface space-y-2 p-4 text-sm transition hover:border-brand/40"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-medium">{c.description}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {c.type} · {fmtEur(c.declared_value_eur)}
                     </span>
                   </div>
@@ -199,14 +219,10 @@ export default async function CampaignPage({
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <ScorePill score={c.ai_score} />
                       {verdict?.matchesClaim && (
-                        <span className="rounded bg-secondary px-2 py-0.5 text-secondary-foreground">
-                          claim: {verdict.matchesClaim}
-                        </span>
+                        <Badge>claim: {verdict.matchesClaim}</Badge>
                       )}
                       {verdict?.valuePlausible && (
-                        <span className="rounded bg-secondary px-2 py-0.5 text-secondary-foreground">
-                          value: {verdict.valuePlausible}
-                        </span>
+                        <Badge>value: {verdict.valuePlausible}</Badge>
                       )}
                     </div>
                   )}
@@ -216,7 +232,7 @@ export default async function CampaignPage({
                     </p>
                   )}
                   {verdict?.redFlags && verdict.redFlags.length > 0 && (
-                    <ul className="text-xs text-rose-600 dark:text-rose-400">
+                    <ul className="space-y-0.5 text-xs text-destructive">
                       {verdict.redFlags.map((f, i) => (
                         <li key={i}>⚠ {f}</li>
                       ))}
@@ -230,7 +246,7 @@ export default async function CampaignPage({
       </section>
 
       {user.type === "investor" && (
-        <section className="mt-8">
+        <section className="mt-10">
           <DDSection companyId={co.id} initialBrief={cachedDD} />
         </section>
       )}
@@ -242,18 +258,15 @@ export default async function CampaignPage({
       )}
 
       {ratings.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        <section className="mt-10">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Recent ratings
           </h2>
           <ul className="mt-3 space-y-2">
             {ratings.slice(0, 3).map((r) => (
-              <li
-                key={r.id}
-                className="rounded-md border border-border px-4 py-3 text-sm"
-              >
+              <li key={r.id} className="surface p-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{"★".repeat(r.score)}</span>
+                  <span className="text-warning">{"★".repeat(r.score)}</span>
                   <span className="text-xs text-muted-foreground">
                     {new Date(r.created_at).toLocaleDateString()}
                   </span>
@@ -270,52 +283,39 @@ export default async function CampaignPage({
   );
 }
 
-function ScorePill({ score }: { score: number }) {
-  const tone =
-    score >= 70
-      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-      : score >= 40
-        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
-        : "bg-rose-500/15 text-rose-700 dark:text-rose-400";
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}
-      title="0-100 AI verification confidence"
-    >
-      AI score {score}
-    </span>
-  );
-}
-
-function Tag({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-md bg-secondary px-2 py-0.5 text-secondary-foreground">
-      {children}
-    </span>
-  );
-}
-
-function Field({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+    <div className="surface p-4">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
         {label}
-      </dt>
-      <dd className="mt-0.5 text-sm font-medium">{value}</dd>
+      </div>
+      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
     </div>
   );
 }
 
-function fmtEur(n: number): string {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(n);
+function PanelSection({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="surface p-5">
+      <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        <span aria-hidden>{icon}</span>
+        {title}
+      </h2>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{children}</p>
+    </section>
+  );
+}
+
+function ScorePill({ score }: { score: number }) {
+  const variant: "success" | "warning" | "danger" =
+    score >= 70 ? "success" : score >= 40 ? "warning" : "danger";
+  return <Badge variant={variant}>AI score {score}</Badge>;
 }

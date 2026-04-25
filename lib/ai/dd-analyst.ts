@@ -99,11 +99,31 @@ Be honest. Don't invent. If the agent's notes are thin, the brief should say so.
 export type DDAgentInput = {
   company: CompanyRow;
   campaigns?: CampaignRow[];
+  onEvent?: (event: DDAgentEvent) => void;
 };
+
+export type DDAgentEvent =
+  | { type: "stage"; id: DDStageId; label: string }
+  | { type: "stage:done"; id: DDStageId; detail?: string }
+  | {
+      type: "tool:call";
+      tool: "webSearch" | "fetchUrl" | "companyLookup";
+      input: unknown;
+      stepIndex: number;
+    }
+  | {
+      type: "tool:result";
+      tool: "webSearch" | "fetchUrl" | "companyLookup";
+      summary: string;
+      stepIndex: number;
+    };
+
+export type DDStageId = "research" | "structure";
 
 export async function runDDAgent({
   company,
   campaigns = [],
+  onEvent,
 }: DDAgentInput): Promise<DDBrief> {
   const totalSeeking = campaigns.reduce(
     (s, c) => s + (c.status === "open" ? c.capital_seeking_eur : 0),
@@ -132,6 +152,27 @@ export async function runDDAgent({
     company.pitch ?? "(no pitch on file)",
   ].join("\n");
 
+  onEvent?.({ type: "stage", id: "research", label: "Researching the company online" });
+
+  let stepCounter = 0;
+  const wrapTool = <T extends "webSearch" | "fetchUrl" | "companyLookup">(
+    name: T,
+    fn: (input: any) => Promise<any>,
+  ) => {
+    return async (input: any) => {
+      const stepIndex = stepCounter++;
+      onEvent?.({ type: "tool:call", tool: name, input, stepIndex });
+      const result = await fn(input);
+      onEvent?.({
+        type: "tool:result",
+        tool: name,
+        summary: summariseToolResult(name, input, result),
+        stepIndex,
+      });
+      return result;
+    };
+  };
+
   // Step 1 — agentic research with tools
   const research = await generateText({
     model: mistral(MODEL_LARGE),
@@ -142,13 +183,17 @@ export async function runDDAgent({
         description:
           "Public web search via Tavily. Use for company name, news, mentions. Returns up to 5 results.",
         inputSchema: z.object({ query: z.string() }),
-        execute: async ({ query }) => webSearch(query, 5),
+        execute: wrapTool("webSearch", async ({ query }: { query: string }) =>
+          webSearch(query, 5)
+        ),
       }),
       fetchUrl: tool({
         description:
           "Fetch a specific URL and return text content (HTML stripped, 50KB cap). Use to read company website or articles.",
         inputSchema: z.object({ url: z.string() }),
-        execute: async ({ url }) => fetchUrlText(url),
+        execute: wrapTool("fetchUrl", async ({ url }: { url: string }) =>
+          fetchUrlText(url)
+        ),
       }),
       companyLookup: tool({
         description:
@@ -157,11 +202,21 @@ export async function runDDAgent({
           name: z.string(),
           country: z.string().describe("ISO-2 country code"),
         }),
-        execute: async ({ name, country }) => companyLookup(name, country),
+        execute: wrapTool(
+          "companyLookup",
+          async ({ name, country }: { name: string; country: string }) =>
+            companyLookup(name, country)
+        ),
       }),
     },
     stopWhen: stepCountIs(8),
     temperature: 0.2,
+  });
+
+  onEvent?.({
+    type: "stage:done",
+    id: "research",
+    detail: `${stepCounter} tool ${stepCounter === 1 ? "call" : "calls"}`,
   });
 
   const toolSummary = research.steps
@@ -183,6 +238,8 @@ export async function runDDAgent({
     toolSummary || "(no tool results)",
   ].join("\n\n");
 
+  onEvent?.({ type: "stage", id: "structure", label: "Structuring the brief" });
+
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const r = await generateObject({
@@ -192,10 +249,52 @@ export async function runDDAgent({
         prompt: ["Company profile:", taskBrief, "", findingsNote].join("\n\n"),
         temperature: 0,
       });
+      onEvent?.({
+        type: "stage:done",
+        id: "structure",
+        detail: `${r.object.evidence.length} sources · sentiment ${r.object.sentimentScore}`,
+      });
       return r.object;
     } catch (e) {
       if (attempt === 1) throw e;
     }
   }
   throw new Error("unreachable");
+}
+
+function summariseToolResult(
+  tool: "webSearch" | "fetchUrl" | "companyLookup",
+  input: any,
+  result: any
+): string {
+  try {
+    if (tool === "webSearch") {
+      const n = Array.isArray(result?.results) ? result.results.length : 0;
+      return `${n} result${n === 1 ? "" : "s"} for "${truncate(String(input?.query ?? ""), 60)}"`;
+    }
+    if (tool === "fetchUrl") {
+      const len = typeof result?.text === "string" ? result.text.length : 0;
+      return `${(len / 1024).toFixed(1)} KB from ${hostnameSafe(input?.url)}`;
+    }
+    if (tool === "companyLookup") {
+      if (result?.reason === "non_FR_lookup_unsupported") return "non-FR (skipped)";
+      if (result?.matches?.length) return `${result.matches.length} match${result.matches.length === 1 ? "" : "es"} in SIRENE`;
+      return "no match in SIRENE";
+    }
+  } catch {}
+  return "completed";
+}
+
+function truncate(s: string, n: number): string {
+  if (s.length <= n) return s;
+  return s.slice(0, n - 1) + "…";
+}
+
+function hostnameSafe(url: unknown): string {
+  if (typeof url !== "string") return "(url)";
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }

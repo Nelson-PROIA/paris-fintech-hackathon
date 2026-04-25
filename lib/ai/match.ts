@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { generateObject } from "ai";
+import { generateObject, streamObject } from "ai";
 import { mistral, MODEL_LARGE } from "@/lib/ai/client";
 import type { CampaignWithCompany, InvestorRow } from "@/lib/db";
 
@@ -97,4 +97,83 @@ export async function runMatch(
     }
   }
   throw new Error("unreachable");
+}
+
+/**
+ * Streaming variant: emits each fully-formed match as Mistral produces it.
+ * Returns the final list once the stream completes.
+ */
+export async function streamMatchItems(
+  investor: InvestorRow,
+  candidates: CampaignWithCompany[],
+  onItem: (item: MatchedItem) => void
+): Promise<MatchedItem[]> {
+  if (!candidates.length) return [];
+
+  const sectors = investor.sectors_json
+    ? (JSON.parse(investor.sectors_json) as string[])
+    : [];
+  const countries = investor.countries_json
+    ? (JSON.parse(investor.countries_json) as string[])
+    : [];
+  const stages = investor.stages_json
+    ? (JSON.parse(investor.stages_json) as string[])
+    : [];
+
+  const top = candidates.slice(0, 30);
+  const candidatesNote = top
+    .map((c) => {
+      const co = c.company;
+      return `- ${c.id} | ${co.name} (${co.country ?? "-"}, ${co.sector ?? "-"}, ${co.stage ?? "-"}) | "${c.title}" | seeking €${c.capital_seeking_eur} | MRR ${co.monthly_revenue_eur ?? "n/a"} | team ${co.team_size ?? "?"}`;
+    })
+    .join("\n");
+
+  const prompt = [
+    "Investor thesis:",
+    `- Display name: ${investor.display_name}`,
+    `- Sectors: ${sectors.join(", ") || "any"}`,
+    `- Countries: ${countries.join(", ") || "any"}`,
+    `- Stages: ${stages.join(", ") || "any"}`,
+    `- Ticket range: ${investor.ticket_min_eur ?? "?"}–${investor.ticket_max_eur ?? "?"} EUR`,
+    `- Total capital: ${investor.total_capital_eur ?? "n/a"} EUR`,
+    `- Risk tolerance: ${investor.risk_tolerance ?? "medium"}`,
+    `- Free thesis: ${investor.thesis_text ?? "(none)"}`,
+    "",
+    `Candidate campaigns (${top.length}):`,
+    candidatesNote,
+  ].join("\n");
+
+  const result = streamObject({
+    model: mistral(MODEL_LARGE),
+    schema: MatchResultSchema,
+    system: SYSTEM_PROMPT,
+    prompt,
+    temperature: 0,
+  });
+
+  const seen = new Set<string>();
+  const items: MatchedItem[] = [];
+
+  for await (const partial of result.partialObjectStream) {
+    const matches = partial.matches;
+    if (!matches) continue;
+    for (const m of matches) {
+      if (!m) continue;
+      const id = m.campaignId;
+      const score = m.fitScore;
+      const reasoning = m.reasoning;
+      if (!id || score == null || !reasoning || reasoning.length < 20) continue;
+      if (seen.has(id)) continue;
+      const safe: MatchedItem = {
+        campaignId: id,
+        fitScore: typeof score === "number" ? score : 0,
+        reasoning,
+      };
+      seen.add(id);
+      items.push(safe);
+      onItem(safe);
+    }
+  }
+
+  return items;
 }
