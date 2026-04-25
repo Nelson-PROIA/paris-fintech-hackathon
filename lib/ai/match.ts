@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateObject, streamObject } from "ai";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { mistral, MODEL_LARGE, withModelFallback } from "@/lib/ai/client";
 import type { CampaignWithCompany, InvestorRow } from "@/lib/db";
 
 const MatchedItemSchema = z.object({
@@ -84,13 +84,16 @@ export async function runMatch(
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await generateObject({
-        model: mistral(MODEL_LARGE),
-        schema: MatchResultSchema,
-        system: SYSTEM_PROMPT,
-        prompt,
-        temperature: 0,
-      });
+      const r = await withModelFallback((model) =>
+        generateObject({
+          model,
+          schema: MatchResultSchema,
+          system: SYSTEM_PROMPT,
+          prompt,
+          temperature: 0,
+          maxRetries: 3,
+        })
+      );
       return r.object;
     } catch (e) {
       if (attempt === 1) throw e;
@@ -149,6 +152,7 @@ export async function streamMatchItems(
     system: SYSTEM_PROMPT,
     prompt,
     temperature: 0,
+    maxRetries: 3,
   });
 
   const seen = new Set<string>();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { withModelFallback } from "@/lib/ai/client";
 import { SMBFieldsSchema } from "@/lib/ai/onboarding-smb";
 
 export const runtime = "nodejs";
@@ -23,13 +23,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await generateObject({
-      model: mistral(MODEL_LARGE),
-      schema: SMBFieldsSchema,
-      system: EXTRACT_SYSTEM_PROMPT,
-      prompt: transcript,
-      temperature: 0,
-    });
+    const result = await withModelFallback((model) =>
+      generateObject({
+        model,
+        schema: SMBFieldsSchema,
+        system: EXTRACT_SYSTEM_PROMPT,
+        prompt: transcript,
+        temperature: 0,
+        maxRetries: 3,
+      })
+    );
     return NextResponse.json(result.object);
   } catch (e) {
     return NextResponse.json(

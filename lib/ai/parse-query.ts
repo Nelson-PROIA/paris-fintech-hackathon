@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateObject } from "ai";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { withModelFallback } from "@/lib/ai/client";
 
 export const PortfolioFilterParseSchema = z.object({
   totalCapital: z
@@ -54,18 +54,21 @@ export async function parsePortfolioQuery(
   allowedSectors: string[],
   allowedCountries: string[]
 ): Promise<PortfolioFilterParse> {
-  const r = await generateObject({
-    model: mistral(MODEL_LARGE),
-    schema: PortfolioFilterParseSchema,
-    system: `You are parsing an investor's plain-language portfolio request into structured filter values.
+  const r = await withModelFallback((model) =>
+    generateObject({
+      model,
+      schema: PortfolioFilterParseSchema,
+      system: `You are parsing an investor's plain-language portfolio request into structured filter values.
 
 Allowed sectors (use ONLY these strings, lowercase exact): ${allowedSectors.join(", ")}
 Allowed country codes (ISO-2 only): ${allowedCountries.join(", ")}
 
 ${MAPPING_NOTES}`,
-    prompt: text.slice(0, 1000),
-    temperature: 0,
-  });
+      prompt: text.slice(0, 1000),
+      temperature: 0,
+      maxRetries: 3,
+    })
+  );
   return r.object;
 }
 
@@ -74,10 +77,11 @@ export async function parseFeedQuery(
   allowedSectors: string[],
   allowedCountries: string[]
 ): Promise<FeedFilterParse> {
-  const r = await generateObject({
-    model: mistral(MODEL_LARGE),
-    schema: FeedFilterParseSchema,
-    system: `You are parsing a plain-language deal-browse query into structured filter values.
+  const r = await withModelFallback((model) =>
+    generateObject({
+      model,
+      schema: FeedFilterParseSchema,
+      system: `You are parsing a plain-language deal-browse query into structured filter values.
 
 Allowed sectors (use ONLY these strings, lowercase exact): ${allowedSectors.join(", ")}
 Allowed country codes (ISO-2 only): ${allowedCountries.join(", ")}
@@ -85,8 +89,10 @@ Allowed country codes (ISO-2 only): ${allowedCountries.join(", ")}
 ${MAPPING_NOTES}
 
 For ticket range: "tickets up to €200k" → ticketMax 200000. "at least €100k" → ticketMin 100000. "between €100k and €500k" → both.`,
-    prompt: text.slice(0, 1000),
-    temperature: 0,
-  });
+      prompt: text.slice(0, 1000),
+      temperature: 0,
+      maxRetries: 3,
+    })
+  );
   return r.object;
 }

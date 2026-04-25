@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateObject } from "ai";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { withModelFallback } from "@/lib/ai/client";
 import type { CollateralRow } from "@/lib/db";
 
 export const CollateralVerdictSchema = z.object({
@@ -95,13 +95,16 @@ export async function verifyCollateral(
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await generateObject({
-        model: mistral(MODEL_LARGE),
-        schema: CollateralVerdictSchema,
-        system: SYSTEM_PROMPT,
-        prompt,
-        temperature: 0,
-      });
+      const r = await withModelFallback((model) =>
+        generateObject({
+          model,
+          schema: CollateralVerdictSchema,
+          system: SYSTEM_PROMPT,
+          prompt,
+          temperature: 0,
+          maxRetries: 3,
+        })
+      );
       return r.object;
     } catch (e) {
       if (attempt === 1) throw e;

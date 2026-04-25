@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { generateObject, generateText, stepCountIs, tool } from "ai";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { mistral, MODEL_LARGE, withModelFallback } from "@/lib/ai/client";
 import { fetchUrlText } from "@/lib/tools/fetch-url";
 import { webSearch } from "@/lib/tools/web-search";
 import { companyLookup } from "@/lib/tools/company-lookup";
@@ -211,6 +211,7 @@ export async function runDDAgent({
     },
     stopWhen: stepCountIs(8),
     temperature: 0.2,
+    maxRetries: 4,
   });
 
   onEvent?.({
@@ -242,13 +243,16 @@ export async function runDDAgent({
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await generateObject({
-        model: mistral(MODEL_LARGE),
-        schema: DDBriefSchema,
-        system: STRUCTURE_SYSTEM_PROMPT,
-        prompt: ["Company profile:", taskBrief, "", findingsNote].join("\n\n"),
-        temperature: 0,
-      });
+      const r = await withModelFallback((model) =>
+        generateObject({
+          model,
+          schema: DDBriefSchema,
+          system: STRUCTURE_SYSTEM_PROMPT,
+          prompt: ["Company profile:", taskBrief, "", findingsNote].join("\n\n"),
+          temperature: 0,
+          maxRetries: 3,
+        })
+      );
       onEvent?.({
         type: "stage:done",
         id: "structure",

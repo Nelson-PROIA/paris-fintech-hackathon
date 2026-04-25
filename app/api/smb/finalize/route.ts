@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { randomUUID } from "node:crypto";
-import { mistral, MODEL_LARGE } from "@/lib/ai/client";
+import { withModelFallback } from "@/lib/ai/client";
 import {
   SMBFieldsSchema,
   missingForFinalize,
@@ -41,13 +41,16 @@ export async function POST(req: Request) {
   let lastErr: unknown = null;
   for (let attempt = 0; attempt < 2 && !fields; attempt++) {
     try {
-      const result = await generateObject({
-        model: mistral(MODEL_LARGE),
-        schema: SMBFieldsSchema,
-        system: FINALIZE_SYSTEM_PROMPT,
-        prompt: transcript,
-        temperature: 0,
-      });
+      const result = await withModelFallback((model) =>
+        generateObject({
+          model,
+          schema: SMBFieldsSchema,
+          system: FINALIZE_SYSTEM_PROMPT,
+          prompt: transcript,
+          temperature: 0,
+          maxRetries: 3,
+        })
+      );
       fields = result.object;
     } catch (e) {
       lastErr = e;
