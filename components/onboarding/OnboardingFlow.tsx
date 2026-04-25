@@ -201,7 +201,7 @@ export function OnboardingFlow({
         });
         if (!saveRes.ok) {
           const body = await safeJson(saveRes);
-          throw new Error(body?.error || `Sauvegarde KO (HTTP ${saveRes.status})`);
+          throw new Error(body?.error || `Save failed (HTTP ${saveRes.status})`);
         }
 
         setSubmitStage("creating");
@@ -212,7 +212,7 @@ export function OnboardingFlow({
         });
         const body = await safeJson(res);
         if (!res.ok) {
-          throw new Error(body?.error || `Finalisation KO (HTTP ${res.status})`);
+          throw new Error(body?.error || `Finalisation failed (HTTP ${res.status})`);
         }
 
         setSubmitStage("redirecting");
@@ -277,7 +277,7 @@ export function OnboardingFlow({
             {state === "active" && (
               <div className="flex items-center justify-between pt-2">
                 <p className="text-xs text-muted-foreground">
-                  Tes réponses sont sauvegardées au fur et à mesure.
+                  Your answers are saved as you go.
                 </p>
                 {isStepComplete(step) && (
                   <button
@@ -285,7 +285,7 @@ export function OnboardingFlow({
                     onClick={() => setEditingStepId(null)}
                     className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
                   >
-                    Continuer
+                    Continue
                   </button>
                 )}
               </div>
@@ -516,7 +516,7 @@ function FieldRenderer({
                   : "rounded-md border border-border bg-background px-4 py-1.5 text-sm hover:bg-accent"
               }
             >
-              {v === "yes" ? "Oui" : "Non"}
+              {v === "yes" ? "Yes" : "No"}
             </button>
           ))}
         </div>
@@ -635,7 +635,7 @@ function RangeSliderControl({
         </label>
       </div>
       <p className="text-xs text-muted-foreground">
-        Plage actuelle : {formatNumber(minValue)} – {formatNumber(maxValue)}{" "}
+        Current range: {formatNumber(minValue)} – {formatNumber(maxValue)}{" "}
         {unit}
       </p>
     </div>
@@ -685,6 +685,6 @@ function isFieldComplete(
 
 function formatNumber(n: number): string {
   if (Math.abs(n) >= 1000)
-    return new Intl.NumberFormat("fr-FR").format(n);
+    return new Intl.NumberFormat("en-GB").format(n);
   return String(n);
 }

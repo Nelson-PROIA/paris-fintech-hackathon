@@ -132,7 +132,7 @@ export function PresetChips(props: SingleProps | MultiProps) {
           value={otherText.trim()}
           onChange={(e) => setOther(e.target.value)}
           disabled={props.disabled}
-          placeholder="Précise…"
+          placeholder="Specify…"
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
         />
       )}

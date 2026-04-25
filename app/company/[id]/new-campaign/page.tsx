@@ -21,15 +21,15 @@ export default async function NewCampaignPage({
         href={`/company/${id}`}
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Retour à {company.name}
+        ← Back to {company.name}
       </Link>
       <header className="mt-6 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Nouvelle demande de financement
+          New funding campaign
         </h1>
         <p className="text-muted-foreground">
-          Quelques questions sur le besoin uniquement — ton profil entreprise
-          ({company.name}) est déjà partagé avec les prêteurs.
+          A few questions about the need — your company profile
+          ({company.name}) is already shared with investors.
         </p>
       </header>
 

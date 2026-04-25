@@ -45,7 +45,7 @@ export default async function CompanyPage({
         href={backHref}
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Retour {user.type === "investor" ? "au feed" : "au dashboard"}
+        ← Back to {user.type === "investor" ? "feed" : "dashboard"}
       </Link>
 
       <header className="mt-6 space-y-2">
@@ -64,7 +64,7 @@ export default async function CompanyPage({
             )}
             {isOwner && (
               <span className="rounded-full border border-border px-3 py-0.5 text-xs text-muted-foreground">
-                Ton entreprise
+                Your company
               </span>
             )}
           </div>
@@ -89,12 +89,12 @@ export default async function CompanyPage({
       {hasOnboardingData && (
         <section className="mt-6 space-y-2">
           <h2 className="text-lg font-semibold">
-            {isOwner ? "Ton profil entreprise" : "Profil détaillé"}
+            {isOwner ? "Your company profile" : "Detailed profile"}
           </h2>
           <p className="text-xs text-muted-foreground">
             {isOwner
-              ? "Voici ce que voient les prêteurs sur ton profil. Pour le mettre à jour, retourne sur /onboard."
-              : "Données collectées lors de l'onboarding et enrichissement automatique (SIRENE + recherche web)."}
+              ? "This is what investors see on your profile. To update it, go back to /onboard."
+              : "Data collected during onboarding plus automatic enrichment (SIRENE + web search)."}
           </p>
           <div className="mt-3">
             <CompanyOnboardingPanel
@@ -109,20 +109,20 @@ export default async function CompanyPage({
       <section id="campaigns" className="mt-8">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-lg font-semibold">
-            Campagnes de financement ({campaigns.length})
+            Funding campaigns ({campaigns.length})
           </h2>
           {isOwner && (
             <Link
               href={`/company/${company.id}/new-campaign`}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
             >
-              + Demander un financement
+              + Request funding
             </Link>
           )}
         </div>
         {campaigns.length === 0 ? (
           <div className="mt-3 rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            Aucune campagne pour le moment.
+            No campaigns yet.
             {isOwner && (
               <>
                 <br />
@@ -130,7 +130,7 @@ export default async function CompanyPage({
                   href={`/company/${company.id}/new-campaign`}
                   className="mt-3 inline-block rounded-md bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
                 >
-                  Lancer ta première demande
+                  Start your first campaign
                 </Link>
               </>
             )}
@@ -168,7 +168,7 @@ export default async function CompanyPage({
       {ratings.length > 0 && (
         <section className="mt-8">
           <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Évaluations récentes
+            Recent ratings
           </h2>
           <ul className="mt-3 space-y-2">
             {ratings.slice(0, 5).map((r) => (
@@ -223,7 +223,7 @@ function safeParseArray<T>(s: string | null): T[] {
 }
 
 function fmtEur(n: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,

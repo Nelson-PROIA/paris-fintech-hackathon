@@ -26,7 +26,7 @@ export function CampaignNeedFlow({ companyId }: Props) {
       mode={{
         kind: "campaign",
         profileType: "smb",
-        submitLabels: { submitButton: "Créer la campagne" },
+        submitLabels: { submitButton: "Create campaign" },
         async onSubmit(data: ProfileData, documents: UploadedDocument[]) {
           const res = await fetch("/api/campaigns/create", {
             method: "POST",
@@ -42,7 +42,7 @@ export function CampaignNeedFlow({ companyId }: Props) {
             | null;
           if (!res.ok || !body?.campaignId) {
             throw new Error(
-              body?.error || `Création KO (HTTP ${res.status})`
+              body?.error || `Creation failed (HTTP ${res.status})`
             );
           }
           return { redirect: `/campaign/${body.campaignId}` };

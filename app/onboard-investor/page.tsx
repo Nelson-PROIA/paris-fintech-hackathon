@@ -30,11 +30,11 @@ export default async function OnboardInvestorPage() {
       <main className="mx-auto max-w-3xl px-6 py-8">
         <header className="mb-8 space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">
-            Onboarding investisseur
+            Investor onboarding
           </h1>
           <p className="text-muted-foreground">
-            Quelques presets, deux zones de texte libre et une thèse :
-            l'IA reformule, tu valides. Tout reste modifiable.
+            A few presets, two free-text fields and a thesis: the AI
+            rephrases, you confirm. Everything stays editable.
           </p>
         </header>
 

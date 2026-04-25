@@ -2,19 +2,19 @@ import type { StepConfig } from "./types";
 import { COUNTRY_OPTIONS, SMB_SECTOR_OPTIONS } from "./smb-steps";
 
 const INVESTOR_TYPE_OPTIONS = [
-  { value: "individual", label: "Particulier" },
+  { value: "individual", label: "Individual" },
   { value: "family_office", label: "Family office" },
-  { value: "fund", label: "Fonds" },
-  { value: "company", label: "Entreprise / corporate" },
+  { value: "fund", label: "Fund" },
+  { value: "company", label: "Company / corporate" },
 ];
 
 const TOTAL_CAPITAL_BUCKETS = [
-  { value: 5_000, label: "< 10 k€", rangeKey: "<10k" },
-  { value: 25_000, label: "10-50 k€", rangeKey: "10-50k" },
-  { value: 100_000, label: "50-200 k€", rangeKey: "50-200k" },
-  { value: 500_000, label: "200 k€-1 M€", rangeKey: "200k-1M" },
-  { value: 2_500_000, label: "1-5 M€", rangeKey: "1-5M" },
-  { value: 7_500_000, label: "> 5 M€", rangeKey: ">5M" },
+  { value: 5_000, label: "< €10k", rangeKey: "<10k" },
+  { value: 25_000, label: "€10-50k", rangeKey: "10-50k" },
+  { value: 100_000, label: "€50-200k", rangeKey: "50-200k" },
+  { value: 500_000, label: "€200k-1M", rangeKey: "200k-1M" },
+  { value: 2_500_000, label: "€1-5M", rangeKey: "1-5M" },
+  { value: 7_500_000, label: "> €5M", rangeKey: ">5M" },
 ];
 
 const POSITIONS_OPTIONS = [
@@ -25,83 +25,83 @@ const POSITIONS_OPTIONS = [
 ];
 
 const RISK_OPTIONS = [
-  { value: "low", label: "Faible", hint: "Cash-flow stables, collatéral solide" },
-  { value: "medium", label: "Modéré", hint: "Mix défensif + opportuniste" },
-  { value: "high", label: "Élevé", hint: "Rendement avant tout, j'accepte la perte" },
+  { value: "low", label: "Low", hint: "Stable cash flows, solid collateral" },
+  { value: "medium", label: "Moderate", hint: "Defensive + opportunistic mix" },
+  { value: "high", label: "High", hint: "Yield first, accept potential losses" },
 ];
 
 const YIELD_BUCKETS = [
-  { value: 4, label: "3-5 %", rangeKey: "3-5" },
-  { value: 6.5, label: "5-8 %", rangeKey: "5-8" },
-  { value: 10, label: "8-12 %", rangeKey: "8-12" },
-  { value: 16, label: "12-20 %", rangeKey: "12-20" },
-  { value: 25, label: "20 %+", rangeKey: ">20" },
+  { value: 4, label: "3-5%", rangeKey: "3-5" },
+  { value: 6.5, label: "5-8%", rangeKey: "5-8" },
+  { value: 10, label: "8-12%", rangeKey: "8-12" },
+  { value: 16, label: "12-20%", rangeKey: "12-20" },
+  { value: 25, label: "20%+", rangeKey: ">20" },
 ];
 
 const HORIZON_OPTIONS = [
-  { value: "short_strict", label: "Court terme strict (≤ 90 j)" },
-  { value: "mixed", label: "Mixte (court + 6 mois)" },
-  { value: "include_long", label: "Inclure 6 mois et plus" },
+  { value: "short_strict", label: "Short-term strict (≤ 90d)" },
+  { value: "mixed", label: "Mixed (short + 6 months)" },
+  { value: "include_long", label: "Include 6 months and beyond" },
 ];
 
 const KYC_CATEGORIES = [
-  { value: "id_proof", label: "Pièce d'identité" },
-  { value: "address_proof", label: "Justificatif de domicile" },
-  { value: "track_record", label: "Track record (optionnel)" },
-  { value: "mandate", label: "Mandat de gestion (optionnel)" },
-  { value: "other", label: "Autre" },
+  { value: "id_proof", label: "ID document" },
+  { value: "address_proof", label: "Proof of address" },
+  { value: "track_record", label: "Track record (optional)" },
+  { value: "mandate", label: "Discretionary mandate (optional)" },
+  { value: "other", label: "Other" },
 ];
 
 export const INVESTOR_STEPS: StepConfig[] = [
   {
     id: "profile",
-    title: "Ton profil d'investisseur",
-    subtitle: "Trois infos rapides pour te connaître.",
+    title: "Your investor profile",
+    subtitle: "Three quick facts to get to know you.",
     fields: [
       {
         id: "investor_type",
         kind: "chips",
-        label: "Tu investis en tant que…",
+        label: "You're investing as…",
         options: INVESTOR_TYPE_OPTIONS,
         required: true,
       },
       {
         id: "country",
         kind: "chips",
-        label: "Pays de résidence (fiscale)",
+        label: "Country of (tax) residence",
         options: COUNTRY_OPTIONS,
         required: true,
       },
       {
         id: "wallet_address",
         kind: "text-short",
-        label: "Adresse wallet stablecoin (optionnel)",
+        label: "Stablecoin wallet address (optional)",
         helper:
-          "Pour la suite : nous y enverrons les positions. Tu peux la lier plus tard.",
-        placeholder: "0x… ou adresse compatible USDC",
+          "For later: we'll send positions there. You can link it any time.",
+        placeholder: "0x… or USDC-compatible address",
       },
     ],
   },
 
   {
     id: "capital",
-    title: "Capital alloué et tickets",
+    title: "Capital allocated and tickets",
     subtitle:
-      "On utilise ces montants pour calibrer les opportunités qu'on te montre.",
+      "We use these amounts to calibrate the opportunities we show you.",
     visibleIf: (d) => Boolean(d.investor_type),
     fields: [
       {
         id: "total_capital_bucket",
         kind: "buckets",
-        label: "Capital total alloué à cette stratégie",
+        label: "Total capital allocated to this strategy",
         options: TOTAL_CAPITAL_BUCKETS,
         required: true,
       },
       {
         id: "ticket_range",
         kind: "range-slider",
-        label: "Ticket par opération",
-        helper: "Min et max — on filtrera les deals en dehors de cette fourchette.",
+        label: "Ticket per deal",
+        helper: "Min and max — we'll filter out deals outside this range.",
         min: 500,
         max: 250_000,
         step: 500,
@@ -113,8 +113,8 @@ export const INVESTOR_STEPS: StepConfig[] = [
       {
         id: "target_positions",
         kind: "chips",
-        label: "Diversification cible",
-        helper: "Combien de positions tu vises en parallèle ?",
+        label: "Target diversification",
+        helper: "How many positions do you want to hold in parallel?",
         options: POSITIONS_OPTIONS,
       },
     ],
@@ -122,22 +122,22 @@ export const INVESTOR_STEPS: StepConfig[] = [
 
   {
     id: "risk_yield",
-    title: "Profil de risque & rendement",
+    title: "Risk and yield profile",
     subtitle:
-      "On joue franc-jeu : ces seuils filtrent les opportunités, mais ne garantissent rien.",
+      "Straight talk: these thresholds filter opportunities but guarantee nothing.",
     visibleIf: (d) => Boolean(d.total_capital_bucket),
     fields: [
       {
         id: "risk_tolerance",
         kind: "chips",
-        label: "Tolérance au risque",
+        label: "Risk tolerance",
         options: RISK_OPTIONS,
         required: true,
       },
       {
         id: "target_yield_bucket",
         kind: "buckets",
-        label: "Rendement annualisé cible",
+        label: "Target annualised yield",
         options: YIELD_BUCKETS,
         required: true,
       },
@@ -153,30 +153,30 @@ export const INVESTOR_STEPS: StepConfig[] = [
 
   {
     id: "preferences",
-    title: "Préférences sectorielles & géographiques",
-    subtitle: "Tu peux laisser vide pour rester ouvert.",
+    title: "Sector and geographic preferences",
+    subtitle: "Leave blank to stay open.",
     visibleIf: (d) => Boolean(d.risk_tolerance),
     fields: [
       {
         id: "sectors_preferred",
         kind: "chips-multi",
-        label: "Secteurs préférés",
+        label: "Preferred sectors",
         options: SMB_SECTOR_OPTIONS,
       },
       {
         id: "countries_preferred",
         kind: "chips-multi",
-        label: "Zones géographiques préférées",
+        label: "Preferred geographies",
         options: COUNTRY_OPTIONS,
       },
       {
         id: "exclusions",
         kind: "text-long-with-llm",
-        label: "Exclusions (texte libre)",
+        label: "Exclusions (free text)",
         helper:
-          "Décris ce que tu refuses de financer (secteurs, géos, types). « Convertir avec l'IA » en extrait des filtres.",
+          "Describe what you won't fund (sectors, geos, types). 'Enrich with AI' extracts filters.",
         placeholder:
-          "ex. Pas de tabac ni d'alcool, pas de boîtes hors UE, pas de sociétés < 1 an d'existence",
+          "e.g. No tobacco or alcohol, no companies outside the EU, no companies under 1 year old",
         rows: 3,
         enrichKind: "investor_exclusions",
       },
@@ -185,17 +185,17 @@ export const INVESTOR_STEPS: StepConfig[] = [
 
   {
     id: "thesis",
-    title: "Ta thèse en quelques phrases",
+    title: "Your thesis in a few sentences",
     subtitle:
-      "Texte brut → l'IA proposera une version structurée et extraira automatiquement les filtres.",
+      "Plain text → the AI will propose a structured version and automatically extract filters.",
     visibleIf: (d) => Boolean(d.risk_tolerance),
     fields: [
       {
         id: "thesis_raw",
         kind: "text-long-with-llm",
-        label: "Décris ta thèse",
+        label: "Describe your thesis",
         placeholder:
-          "ex. Je cherche du rendement régulier sur des PME françaises rentables, en avance de tréso sur cycle court, faible risque",
+          "e.g. I look for steady yield from profitable French SMBs, short-cycle invoice factoring, low risk",
         rows: 5,
         enrichKind: "investor_thesis",
         required: true,
@@ -205,9 +205,9 @@ export const INVESTOR_STEPS: StepConfig[] = [
 
   {
     id: "kyc_documents",
-    title: "Documents KYC (optionnel pour démarrer)",
+    title: "KYC documents (optional to start)",
     subtitle:
-      "Glisse-dépose ce que tu as. Indispensable avant de financer une première opération réelle.",
+      "Drag and drop what you have. Required before funding your first real deal.",
     visibleIf: (d) => Boolean(d.thesis_raw),
     fields: [
       {

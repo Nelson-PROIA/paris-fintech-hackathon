@@ -23,10 +23,10 @@ type Props = {
 };
 
 const STAGE_LABEL: Record<Props["submitStage"], string> = {
-  idle: "Soumettre",
-  saving: "Sauvegarde…",
-  creating: "Création de l'entreprise…",
-  redirecting: "Redirection…",
+  idle: "Submit",
+  saving: "Saving…",
+  creating: "Creating company…",
+  redirecting: "Redirecting…",
 };
 
 export function Recap({
@@ -46,14 +46,14 @@ export function Recap({
     <section className="space-y-4 rounded-xl border border-foreground/20 bg-card p-5 shadow-sm">
       <header>
         <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Récapitulatif
+          Summary
         </div>
         <h2 className="text-lg font-semibold">
-          On y est. Vérifie et soumets.
+          Almost there. Review and submit.
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tout reste modifiable après soumission. Les champs en tranche sont
-          stockés en valeur médiane pour les calculs de matching.
+          Everything is editable after submission. Range fields are stored
+          as the median value for matching calculations.
         </p>
       </header>
 
@@ -72,7 +72,7 @@ export function Recap({
                   onClick={() => onEditStep(step.id)}
                   className="text-xs text-muted-foreground hover:underline"
                 >
-                  modifier
+                  edit
                 </button>
               </div>
               <dl className="mt-2 space-y-1.5 text-xs">
@@ -85,7 +85,7 @@ export function Recap({
                         <dd className="mt-0.5">
                           {documents.length === 0 ? (
                             <span className="text-muted-foreground">
-                              aucun
+                              none
                             </span>
                           ) : (
                             <ul className="space-y-0.5">
@@ -137,18 +137,19 @@ export function Recap({
 
         {profileType === "smb" && enrichment && enrichment.source !== "none" && (
           <div className="rounded-md border border-border bg-secondary/40 p-3 text-xs">
-            <div className="font-semibold">Profil enrichi (recherche en arrière-plan)</div>
-            {enrichment.siren && <div>SIREN : {enrichment.siren}</div>}
+            <div className="font-semibold">Enriched profile (background research)</div>
+            {enrichment.siren && <div>SIREN: {enrichment.siren}</div>}
             {enrichment.founded_date && (
-              <div>Création : {enrichment.founded_date}</div>
+              <div>Founded: {enrichment.founded_date}</div>
             )}
             {enrichment.principal_activity && (
-              <div>Activité INSEE : {enrichment.principal_activity}</div>
+              <div>INSEE activity: {enrichment.principal_activity}</div>
             )}
-            {enrichment.address && <div>Adresse : {enrichment.address}</div>}
+            {enrichment.address && <div>Address: {enrichment.address}</div>}
             {enrichment.web_mentions.length > 0 && (
               <div>
-                {enrichment.web_mentions.length} mention(s) web archivée(s)
+                {enrichment.web_mentions.length} archived web mention
+                {enrichment.web_mentions.length === 1 ? "" : "s"}
               </div>
             )}
           </div>
@@ -173,7 +174,7 @@ export function Recap({
           disabled={submitting}
           className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
-          {submitting ? "En cours…" : (submitButtonLabel ?? "Soumettre")}
+          {submitting ? "In progress…" : (submitButtonLabel ?? "Submit")}
         </button>
       </div>
     </section>
@@ -184,12 +185,12 @@ function formatValue(v: unknown): string {
   if (v == null || v === "") return "—";
   if (Array.isArray(v)) return v.length === 0 ? "—" : v.join(", ");
   if (typeof v === "number") return formatNumber(v);
-  if (typeof v === "boolean") return v ? "oui" : "non";
+  if (typeof v === "boolean") return v ? "yes" : "no";
   return String(v);
 }
 
 function formatNumber(n: number): string {
   if (Math.abs(n) >= 1000)
-    return new Intl.NumberFormat("fr-FR").format(n);
+    return new Intl.NumberFormat("en-GB").format(n);
   return String(n);
 }

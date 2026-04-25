@@ -25,9 +25,9 @@ export function EnrichmentBanner({
   if (status === "running") {
     return (
       <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-sm">
-        <span className="font-medium">Recherche en arrière-plan…</span>{" "}
+        <span className="font-medium">Background research…</span>{" "}
         <span className="text-muted-foreground">
-          On consulte SIRENE et le web pour pré-remplir certains champs.
+          Querying SIRENE and the web to pre-fill some fields.
         </span>
       </div>
     );
@@ -36,8 +36,8 @@ export function EnrichmentBanner({
   if (status === "error") {
     return (
       <div className="rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-xs text-destructive">
-        Recherche en arrière-plan indisponible. Tu peux continuer sans, on
-        reprendra plus tard.
+        Background research unavailable. You can continue without it; we&apos;ll
+        retry later.
       </div>
     );
   }
@@ -54,9 +54,9 @@ export function EnrichmentBanner({
   if (!hasContent) {
     return (
       <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-sm">
-        <span className="font-medium">Recherche terminée.</span>{" "}
+        <span className="font-medium">Research complete.</span>{" "}
         <span className="text-muted-foreground">
-          On n'a pas trouvé d'info publique exploitable sur cette boîte.
+          No useful public info found on this company.
         </span>
       </div>
     );
@@ -70,7 +70,7 @@ export function EnrichmentBanner({
       | undefined;
     if (ageBucket != null) {
       suggestions.push({
-        label: `Pré-remplir l'âge (création ${result.founded_year})`,
+        label: `Pre-fill age (founded ${result.founded_year})`,
         patch: { age_bucket: ageBucket },
       });
     }
@@ -80,14 +80,14 @@ export function EnrichmentBanner({
     const city = cityMatch?.[1]?.trim();
     if (city) {
       suggestions.push({
-        label: `Pré-remplir la ville : ${city}`,
+        label: `Pre-fill city: ${city}`,
         patch: { city },
       });
     }
   }
   if (result.siren) {
     suggestions.push({
-      label: `Confirmer le SIREN : ${result.siren}`,
+      label: `Confirm SIREN: ${result.siren}`,
       patch: { siret: result.siren },
     });
   }
@@ -97,17 +97,17 @@ export function EnrichmentBanner({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Profil enrichi
+            Enriched profile
           </div>
           <p className="mt-0.5 text-sm">
-            On a trouvé{" "}
+            We found{" "}
             {[
-              result.legal_name && `le nom légal`,
-              result.founded_year && `l'année de création`,
-              result.principal_activity && `l'activité principale`,
-              result.address && `l'adresse`,
+              result.legal_name && `the legal name`,
+              result.founded_year && `the founding year`,
+              result.principal_activity && `the principal activity`,
+              result.address && `the address`,
               result.web_mentions.length > 0 &&
-                `${result.web_mentions.length} mention(s) web`,
+                `${result.web_mentions.length} web mention${result.web_mentions.length === 1 ? "" : "s"}`,
             ]
               .filter(Boolean)
               .join(", ")}
@@ -119,25 +119,25 @@ export function EnrichmentBanner({
           onClick={() => setDismissed(true)}
           className="text-xs text-muted-foreground hover:underline"
         >
-          masquer
+          hide
         </button>
       </div>
 
       <dl className="grid grid-cols-1 gap-1 text-xs sm:grid-cols-2">
         {result.legal_name && (
-          <Row label="Nom légal" value={result.legal_name} />
+          <Row label="Legal name" value={result.legal_name} />
         )}
         {result.siren && <Row label="SIREN" value={result.siren} />}
         {result.founded_date && (
-          <Row label="Création" value={result.founded_date} />
+          <Row label="Founded" value={result.founded_date} />
         )}
         {result.principal_activity && (
-          <Row label="Activité INSEE" value={result.principal_activity} />
+          <Row label="INSEE activity" value={result.principal_activity} />
         )}
-        {result.address && <Row label="Adresse" value={result.address} />}
+        {result.address && <Row label="Address" value={result.address} />}
         {result.is_active != null && (
           <Row
-            label="Statut"
+            label="Status"
             value={result.is_active ? "Active" : "Inactive"}
           />
         )}
@@ -146,7 +146,7 @@ export function EnrichmentBanner({
       {result.web_mentions.length > 0 && (
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">
-            Mentions web
+            Web mentions
           </div>
           <ul className="space-y-1 text-xs">
             {result.web_mentions.slice(0, 3).map((m) => (

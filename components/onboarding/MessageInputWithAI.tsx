@@ -84,7 +84,7 @@ export function MessageInputWithAI({
       />
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          {value.length} caractères · texte brut OK
+          {value.length} characters · plain text is fine
         </p>
         <button
           type="button"
@@ -92,7 +92,7 @@ export function MessageInputWithAI({
           disabled={!value.trim() || disabled || status === "loading"}
           className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent disabled:opacity-50"
         >
-          {status === "loading" ? "Enrichissement…" : "Enrichir avec l'IA"}
+          {status === "loading" ? "Enriching…" : "Enrich with AI"}
         </button>
       </div>
 
@@ -106,7 +106,7 @@ export function MessageInputWithAI({
         <div className="space-y-3 rounded-md border border-border bg-secondary/40 p-3">
           <div>
             <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Proposition de l'IA
+              AI proposal
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm">
               {proposal.enriched}
@@ -118,13 +118,13 @@ export function MessageInputWithAI({
               proposal.extracted.keywords?.length) && (
               <div className="space-y-1 text-xs text-muted-foreground">
                 {proposal.extracted.sectors?.length ? (
-                  <div>Secteurs détectés : {proposal.extracted.sectors.join(", ")}</div>
+                  <div>Sectors detected: {proposal.extracted.sectors.join(", ")}</div>
                 ) : null}
                 {proposal.extracted.countries?.length ? (
-                  <div>Pays détectés : {proposal.extracted.countries.join(", ")}</div>
+                  <div>Countries detected: {proposal.extracted.countries.join(", ")}</div>
                 ) : null}
                 {proposal.extracted.keywords?.length ? (
-                  <div>Mots-clés : {proposal.extracted.keywords.join(", ")}</div>
+                  <div>Keywords: {proposal.extracted.keywords.join(", ")}</div>
                 ) : null}
               </div>
             )}
@@ -134,7 +134,7 @@ export function MessageInputWithAI({
               onClick={accept}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
             >
-              Accepter et remplacer
+              Accept and replace
             </button>
             <button
               type="button"
@@ -144,14 +144,14 @@ export function MessageInputWithAI({
               }}
               className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
             >
-              Ajouter au texte
+              Append to text
             </button>
             <button
               type="button"
               onClick={reject}
               className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
             >
-              Garder l'original
+              Keep original
             </button>
           </div>
         </div>

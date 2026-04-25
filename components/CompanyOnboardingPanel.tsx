@@ -6,29 +6,29 @@ import {
 } from "@/lib/onboarding/risk-score";
 
 const NEED_LABELS: Record<string, string> = {
-  invoice_advance: "Avance sur factures",
-  working_capital: "BFR / trésorerie",
-  stock_purchase: "Achat de stock",
-  supplier_payment: "Paiement fournisseur",
-  payroll: "Salaires",
-  short_invest: "Investissement court",
-  other: "Autre",
+  invoice_advance: "Invoice factoring",
+  working_capital: "Working capital / cash flow",
+  stock_purchase: "Inventory purchase",
+  supplier_payment: "Supplier payment",
+  payroll: "Payroll",
+  short_invest: "Short-term investment",
+  other: "Other",
 };
 
 const URGENCY_LABELS: Record<string, string> = {
-  very_urgent: "Très urgent (< 48 h)",
-  this_week: "Cette semaine",
-  this_month: "Ce mois",
+  very_urgent: "Very urgent (< 48h)",
+  this_week: "This week",
+  this_month: "This month",
   flexible: "Flexible",
 };
 
 const DOC_CATEGORY_LABELS: Record<string, string> = {
-  kbis: "KBIS / extrait registre",
-  invoices: "Factures clients",
-  contracts: "Contrats clients",
-  balance_sheet: "Bilan / liasse",
-  bank_statements: "Relevés bancaires",
-  other: "Autre",
+  kbis: "KBIS / company registry",
+  invoices: "Customer invoices",
+  contracts: "Customer contracts",
+  balance_sheet: "Balance sheet / accounts",
+  bank_statements: "Bank statements",
+  other: "Other",
 };
 
 type OnboardingDoc = {
@@ -76,11 +76,11 @@ function RiskScoreCard({ score }: { score: RiskScoreResult }) {
         <div className="flex-1 space-y-2">
           <div>
             <h2 className="text-base font-semibold">
-              Profil de risque court-terme
+              Short-term risk profile
             </h2>
             <p className="text-xs text-muted-foreground">
-              Indicateur synthétique non contractuel · score {score.score} / 100
-              · DSO + ancienneté + marge + statut SIRENE
+              Indicative score (non-binding) · {score.score} / 100
+              · DSO + age + margin + SIRENE status
             </p>
           </div>
           <ul className="space-y-1 text-sm">
@@ -95,13 +95,13 @@ function RiskScoreCard({ score }: { score: RiskScoreResult }) {
       {(score.flags.length > 0 || score.positives.length > 0) && (
         <details className="mt-3 text-xs">
           <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-            Voir tous les signaux
+            Show all signals
           </summary>
           <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {score.positives.length > 0 && (
               <div>
                 <div className="text-emerald-700 dark:text-emerald-400">
-                  Atouts
+                  Strengths
                 </div>
                 <ul className="mt-1 space-y-0.5">
                   {score.positives.map((p, i) => (
@@ -112,7 +112,7 @@ function RiskScoreCard({ score }: { score: RiskScoreResult }) {
             )}
             {score.flags.length > 0 && (
               <div>
-                <div className="text-rose-700 dark:text-rose-400">Vigilances</div>
+                <div className="text-rose-700 dark:text-rose-400">Concerns</div>
                 <ul className="mt-1 space-y-0.5">
                   {score.flags.map((f, i) => (
                     <li key={i}>− {f}</li>
@@ -139,23 +139,23 @@ function NeedSection({ data }: { data: Record<string, unknown> }) {
   return (
     <section className="rounded-lg border border-border p-5">
       <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        Profil du besoin
+        Funding need
       </h2>
       <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         {amount != null && (
-          <Field label="Montant demandé" value={fmtEur(amount)} />
+          <Field label="Amount requested" value={fmtEur(amount)} />
         )}
-        {duration && <Field label="Durée souhaitée" value={`${duration} j`} />}
+        {duration && <Field label="Target duration" value={`${duration} d`} />}
         {urgency && (
           <Field
-            label="Urgence"
+            label="Urgency"
             value={URGENCY_LABELS[urgency] ?? urgency}
             tone={urgency === "very_urgent" ? "warning" : undefined}
           />
         )}
         {needs && needs.length > 0 && (
           <Field
-            label="Type(s) de besoin"
+            label="Need type(s)"
             value={needs.map((n) => NEED_LABELS[n] ?? n).join(", ")}
           />
         )}
@@ -190,35 +190,35 @@ function OperationalSection({ data }: { data: Record<string, unknown> }) {
   return (
     <section className="rounded-lg border border-border p-5">
       <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        Profil opérationnel
+        Operational profile
       </h2>
       <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
         {dso != null && (
           <Field
-            label="DSO (délai client)"
-            value={`~ ${dso} j`}
+            label="DSO (days sales outstanding)"
+            value={`~ ${dso} d`}
             tone={dso >= 60 ? "warning" : dso < 30 ? "good" : undefined}
           />
         )}
         {margin != null && margin >= 0 && (
-          <Field label="Marge brute" value={`~ ${margin} %`} />
+          <Field label="Gross margin" value={`~ ${margin} %`} />
         )}
         {monthlyRevenue != null && (
-          <Field label="CA mensuel" value={`~ ${fmtEur(monthlyRevenue)}`} />
+          <Field label="Monthly revenue" value={`~ ${fmtEur(monthlyRevenue)}`} />
         )}
         {teamSize != null && (
-          <Field label="Équipe" value={`~ ${teamSize}`} />
+          <Field label="Team" value={`~ ${teamSize}`} />
         )}
         {ageMedian != null && (
-          <Field label="Ancienneté" value={`~ ${ageMedian} ans`} />
+          <Field label="Years in business" value={`~ ${ageMedian}`} />
         )}
         {seasonality && (
-          <Field label="Saisonnalité" value={seasonality === "yes" ? "Oui" : "Non"} />
+          <Field label="Seasonality" value={seasonality === "yes" ? "Yes" : "No"} />
         )}
       </div>
       {seasonality === "yes" && seasonalityNote && (
         <p className="mt-3 text-xs text-muted-foreground">
-          Note saisonnalité : {seasonalityNote}
+          Seasonality note: {seasonalityNote}
         </p>
       )}
     </section>
@@ -230,31 +230,31 @@ function EnrichmentSection({ enrichment }: { enrichment: EnrichmentResult }) {
     <section className="rounded-lg border border-border p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Profil enrichi (recherche en arrière-plan)
+          Enriched profile (background research)
         </h2>
         <span className="text-xs text-muted-foreground">
-          source : {enrichment.source}
+          source: {enrichment.source}
         </span>
       </div>
       <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {enrichment.legal_name && (
-          <Field label="Nom légal" value={enrichment.legal_name} />
+          <Field label="Legal name" value={enrichment.legal_name} />
         )}
         {enrichment.siren && (
           <Field label="SIREN" value={enrichment.siren} />
         )}
         {enrichment.founded_date && (
-          <Field label="Date de création" value={enrichment.founded_date} />
+          <Field label="Founded" value={enrichment.founded_date} />
         )}
         {enrichment.principal_activity && (
-          <Field label="Activité INSEE" value={enrichment.principal_activity} />
+          <Field label="INSEE activity" value={enrichment.principal_activity} />
         )}
         {enrichment.address && (
-          <Field label="Adresse" value={enrichment.address} />
+          <Field label="Address" value={enrichment.address} />
         )}
         {enrichment.is_active != null && (
           <Field
-            label="Statut"
+            label="Status"
             value={enrichment.is_active ? "Active" : "INACTIVE"}
             tone={enrichment.is_active ? "good" : "warning"}
           />
@@ -263,7 +263,7 @@ function EnrichmentSection({ enrichment }: { enrichment: EnrichmentResult }) {
       {enrichment.web_mentions.length > 0 && (
         <div className="mt-4 space-y-1">
           <div className="text-xs font-medium text-muted-foreground">
-            Mentions web ({enrichment.web_mentions.length})
+            Web mentions ({enrichment.web_mentions.length})
           </div>
           <ul className="space-y-1 text-xs">
             {enrichment.web_mentions.slice(0, 5).map((m) => (
@@ -304,10 +304,10 @@ function DocumentsSection({ documents }: { documents: OnboardingDoc[] }) {
   return (
     <section className="rounded-lg border border-border p-5">
       <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-        Documents fournis ({documents.length})
+        Documents on file ({documents.length})
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Documents partagés par la PME — accessibles aux investisseurs connectés.
+        Documents shared by the SMB — visible to authenticated investors.
       </p>
       <div className="mt-4 space-y-4">
         {ordered.map(([cat, docs]) => (
@@ -337,7 +337,7 @@ function DocumentsSection({ documents }: { documents: OnboardingDoc[] }) {
                     download={d.filename}
                     className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
                   >
-                    Télécharger
+                    Download
                   </a>
                 </li>
               ))}
@@ -402,7 +402,7 @@ function numberOrNull(v: unknown): number | null {
 }
 
 function fmtEur(n: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,

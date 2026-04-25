@@ -38,12 +38,11 @@ export default async function OnboardPage() {
     <main className="mx-auto max-w-3xl px-6 py-8">
       <header className="mb-8 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          Onboarding entreprise
+          Company onboarding
         </h1>
         <p className="text-muted-foreground">
-          On préfère les presets aux questions ouvertes : tu cliques, tu
-          glisses-déposes, et l'IA t'aide à formuler quand il faut. Tout est
-          modifiable plus tard.
+          Presets over open questions: tap, drag and drop, and the AI helps
+          you phrase things when it matters. Everything is editable later.
         </p>
       </header>
 

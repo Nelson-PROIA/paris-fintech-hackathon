@@ -39,7 +39,7 @@ export function StepCard({
       <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div className="space-y-1">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Étape {index + 1} / {total}
+            Step {index + 1} / {total}
           </div>
           <h2 className="text-lg font-semibold leading-tight">{title}</h2>
           {subtitle && (

@@ -36,18 +36,18 @@ export function computeRiskScore({ data, enrichment }: Inputs): RiskScoreResult 
   if (dso != null) {
     if (dso < 30) {
       score += 12;
-      positives.push("DSO court (< 30 j) — peu de risque de retard de paiement");
+      positives.push("Short DSO (< 30 d) — low payment-delay risk");
     } else if (dso < 45) {
       score += 6;
-      positives.push("DSO modéré (30-45 j)");
+      positives.push("Moderate DSO (30-45 d)");
     } else if (dso < 60) {
       // neutral
     } else if (dso < 90) {
       score -= 8;
-      flags.push("DSO élevé (60-90 j) — exposition modérée au cash gap");
+      flags.push("High DSO (60-90 d) — moderate cash-gap exposure");
     } else {
       score -= 18;
-      flags.push("DSO très élevé (> 90 j) — risque de tension de trésorerie");
+      flags.push("Very high DSO (> 90 d) — cash-flow tension risk");
     }
   }
 
@@ -56,18 +56,18 @@ export function computeRiskScore({ data, enrichment }: Inputs): RiskScoreResult 
   if (ageYears != null) {
     if (ageYears < 1) {
       score -= 15;
-      flags.push("Entreprise de moins d'un an — peu d'historique");
+      flags.push("Less than 1 year old — limited track record");
     } else if (ageYears < 3) {
       score -= 5;
     } else if (ageYears >= 5 && ageYears < 10) {
       score += 6;
-      positives.push(`${Math.round(ageYears)} ans d'ancienneté`);
+      positives.push(`${Math.round(ageYears)} years in business`);
     } else if (ageYears >= 10) {
       score += 10;
-      positives.push(`${Math.round(ageYears)} ans d'ancienneté — track record solide`);
+      positives.push(`${Math.round(ageYears)} years in business — solid track record`);
     }
   } else {
-    flags.push("Ancienneté inconnue");
+    flags.push("Years in business unknown");
   }
 
   // ── Gross margin ──────────────────────────────────────────────────────────
@@ -75,15 +75,15 @@ export function computeRiskScore({ data, enrichment }: Inputs): RiskScoreResult 
   if (margin != null && margin >= 0) {
     if (margin < 20) {
       score -= 8;
-      flags.push("Marge brute < 20 % — peu d'amortissement possible");
+      flags.push("Gross margin < 20% — limited absorption capacity");
     } else if (margin < 40) {
       // neutral
     } else if (margin < 60) {
       score += 4;
-      positives.push("Marge brute 40-60 %");
+      positives.push("Gross margin 40-60%");
     } else {
       score += 8;
-      positives.push("Marge brute > 60 % — confortable");
+      positives.push("Gross margin > 60% — comfortable");
     }
   }
 
@@ -95,16 +95,16 @@ export function computeRiskScore({ data, enrichment }: Inputs): RiskScoreResult 
     if (monthsOfRevenue > 6) {
       score -= 12;
       flags.push(
-        `Demande > 6 mois de CA (${monthsOfRevenue.toFixed(1)} mois) — repayment lourd`
+        `Request > 6 months of revenue (${monthsOfRevenue.toFixed(1)} months) — heavy repayment`
       );
     } else if (monthsOfRevenue > 3) {
       score -= 4;
       flags.push(
-        `Demande de ${monthsOfRevenue.toFixed(1)} mois de CA — montant significatif`
+        `Request of ${monthsOfRevenue.toFixed(1)} months of revenue — significant amount`
       );
     } else if (monthsOfRevenue < 1) {
       score += 6;
-      positives.push("Demande < 1 mois de CA — facilement absorbable");
+      positives.push("Request < 1 month of revenue — easily absorbable");
     }
   }
 
@@ -112,23 +112,23 @@ export function computeRiskScore({ data, enrichment }: Inputs): RiskScoreResult 
   if (enrichment) {
     if (enrichment.is_active === true) {
       score += 8;
-      positives.push("Statut SIRENE : active");
+      positives.push("SIRENE status: active");
     } else if (enrichment.is_active === false) {
       score -= 25;
-      flags.push("Statut SIRENE : INACTIVE");
+      flags.push("SIRENE status: INACTIVE");
     }
     if (enrichment.siren) {
-      positives.push(`SIREN vérifié (${enrichment.siren})`);
+      positives.push(`SIREN verified (${enrichment.siren})`);
     }
   } else {
-    flags.push("Aucune vérification SIRENE disponible");
+    flags.push("No SIRENE verification available");
   }
 
   // ── Urgency (very urgent often = pressure) ────────────────────────────────
   const urgency = stringOrNull(data.urgency);
   if (urgency === "very_urgent") {
     score -= 6;
-    flags.push("Demande très urgente (< 48 h) — peu de marge de négociation");
+    flags.push("Very urgent request (< 48h) — little negotiating room");
   }
 
   score = clamp(Math.round(score), 0, 100);
@@ -152,13 +152,13 @@ function buildReasons(
   const reasons: string[] = [];
   if (grade === "A" || grade === "B") {
     reasons.push(...positives.slice(0, 2));
-    if (flags.length > 0) reasons.push(`Vigilance : ${flags[0].toLowerCase()}`);
+    if (flags.length > 0) reasons.push(`Concern: ${flags[0].toLowerCase()}`);
   } else {
     reasons.push(...flags.slice(0, 2));
-    if (positives.length > 0) reasons.push(`Atout : ${positives[0].toLowerCase()}`);
+    if (positives.length > 0) reasons.push(`Strength: ${positives[0].toLowerCase()}`);
   }
   if (reasons.length === 0)
-    reasons.push("Données insuffisantes pour un signal fort");
+    reasons.push("Insufficient data for a strong signal");
   return reasons.slice(0, 3);
 }
 

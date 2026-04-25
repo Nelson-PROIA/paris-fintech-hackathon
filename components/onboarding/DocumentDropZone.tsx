@@ -102,10 +102,10 @@ export function DocumentDropZone({
         )}
       >
         <p className="font-medium">
-          Glisse-dépose tes documents ici
+          Drag and drop your documents here
         </p>
         <p className="text-xs text-muted-foreground">
-          ou clique pour en sélectionner · PDF, PNG, JPG
+          or click to select · PDF, PNG, JPG
         </p>
         <input
           ref={inputRef}
@@ -122,7 +122,7 @@ export function DocumentDropZone({
 
       {uploading.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          {uploading.length} fichier(s) en cours d'envoi…
+          Uploading {uploading.length} file{uploading.length === 1 ? "" : "s"}…
         </p>
       )}
 
@@ -158,7 +158,7 @@ export function DocumentDropZone({
                   onChange={(e) => updateCategory(doc.id, e.target.value)}
                   className="rounded-md border border-border bg-background px-2 py-1 text-xs"
                 >
-                  <option value="">— catégorie —</option>
+                  <option value="">— category —</option>
                   {categories.map((c) => (
                     <option key={c.value} value={c.value}>
                       {c.label}
@@ -170,7 +170,7 @@ export function DocumentDropZone({
                   onClick={() => remove(doc.id)}
                   className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-accent"
                 >
-                  retirer
+                  remove
                 </button>
               </div>
             </li>

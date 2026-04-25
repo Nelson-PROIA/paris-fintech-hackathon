@@ -2,13 +2,13 @@ import type { StepConfig } from "./types";
 
 export const COUNTRY_OPTIONS = [
   { value: "FR", label: "France" },
-  { value: "DE", label: "Allemagne" },
-  { value: "ES", label: "Espagne" },
-  { value: "IT", label: "Italie" },
-  { value: "NL", label: "Pays-Bas" },
-  { value: "BE", label: "Belgique" },
+  { value: "DE", label: "Germany" },
+  { value: "ES", label: "Spain" },
+  { value: "IT", label: "Italy" },
+  { value: "NL", label: "Netherlands" },
+  { value: "BE", label: "Belgium" },
   { value: "PT", label: "Portugal" },
-  { value: "OTHER", label: "Autre" },
+  { value: "OTHER", label: "Other" },
 ];
 
 /**
@@ -16,13 +16,13 @@ export const COUNTRY_OPTIONS = [
  * so the finalize mapping into `companies.sector` works without a converter.
  */
 export const SMB_SECTOR_OPTIONS = [
-  { value: "b2b_services", label: "Services B2B" },
-  { value: "agency", label: "Agence / conseil" },
-  { value: "saas_micro", label: "SaaS / micro-éditeur" },
-  { value: "makers", label: "Artisanat / makers" },
-  { value: "retail", label: "Commerce / retail" },
-  { value: "manufacturing", label: "Industrie / fabrication" },
-  { value: "professional_services", label: "Services professionnels" },
+  { value: "b2b_services", label: "B2B services" },
+  { value: "agency", label: "Agency / consulting" },
+  { value: "saas_micro", label: "SaaS / micro-publisher" },
+  { value: "makers", label: "Makers / artisans" },
+  { value: "retail", label: "Retail" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "professional_services", label: "Professional services" },
   { value: "ecommerce", label: "E-commerce" },
 ];
 
@@ -36,108 +36,108 @@ const TEAM_SIZE_BUCKETS = [
 ];
 
 const AGE_BUCKETS = [
-  { value: 0, label: "Moins d'un an", rangeKey: "<1y" },
-  { value: 2, label: "1-3 ans", rangeKey: "1-3y" },
-  { value: 4, label: "3-5 ans", rangeKey: "3-5y" },
-  { value: 7, label: "5-10 ans", rangeKey: "5-10y" },
-  { value: 12, label: "Plus de 10 ans", rangeKey: ">10y" },
+  { value: 0, label: "Less than a year", rangeKey: "<1y" },
+  { value: 2, label: "1-3 years", rangeKey: "1-3y" },
+  { value: 4, label: "3-5 years", rangeKey: "3-5y" },
+  { value: 7, label: "5-10 years", rangeKey: "5-10y" },
+  { value: 12, label: "More than 10 years", rangeKey: ">10y" },
 ];
 
 const REVENUE_BUCKETS = [
-  { value: 5_000, label: "< 10 k€/mois", rangeKey: "<10k" },
-  { value: 30_000, label: "10-50 k€/mois", rangeKey: "10-50k" },
-  { value: 75_000, label: "50-100 k€/mois", rangeKey: "50-100k" },
-  { value: 250_000, label: "100-500 k€/mois", rangeKey: "100-500k" },
-  { value: 750_000, label: "500 k€-1 M€/mois", rangeKey: "500k-1M" },
-  { value: 1_500_000, label: "> 1 M€/mois", rangeKey: ">1M" },
+  { value: 5_000, label: "< €10k/month", rangeKey: "<10k" },
+  { value: 30_000, label: "€10-50k/month", rangeKey: "10-50k" },
+  { value: 75_000, label: "€50-100k/month", rangeKey: "50-100k" },
+  { value: 250_000, label: "€100-500k/month", rangeKey: "100-500k" },
+  { value: 750_000, label: "€500k-1M/month", rangeKey: "500k-1M" },
+  { value: 1_500_000, label: "> €1M/month", rangeKey: ">1M" },
 ];
 
 const MARGIN_BUCKETS = [
-  { value: 10, label: "< 20 %", rangeKey: "<20" },
-  { value: 30, label: "20-40 %", rangeKey: "20-40" },
-  { value: 50, label: "40-60 %", rangeKey: "40-60" },
-  { value: 70, label: "> 60 %", rangeKey: ">60" },
-  { value: -1, label: "Je ne sais pas", rangeKey: "unknown" },
+  { value: 10, label: "< 20%", rangeKey: "<20" },
+  { value: 30, label: "20-40%", rangeKey: "20-40" },
+  { value: 50, label: "40-60%", rangeKey: "40-60" },
+  { value: 70, label: "> 60%", rangeKey: ">60" },
+  { value: -1, label: "I don't know", rangeKey: "unknown" },
 ];
 
 const DSO_BUCKETS = [
-  { value: 15, label: "< 30 jours", rangeKey: "<30d" },
-  { value: 38, label: "30-45 jours", rangeKey: "30-45d" },
-  { value: 53, label: "45-60 jours", rangeKey: "45-60d" },
-  { value: 75, label: "60-90 jours", rangeKey: "60-90d" },
-  { value: 110, label: "> 90 jours", rangeKey: ">90d" },
+  { value: 15, label: "< 30 days", rangeKey: "<30d" },
+  { value: 38, label: "30-45 days", rangeKey: "30-45d" },
+  { value: 53, label: "45-60 days", rangeKey: "45-60d" },
+  { value: 75, label: "60-90 days", rangeKey: "60-90d" },
+  { value: 110, label: "> 90 days", rangeKey: ">90d" },
 ];
 
 const DOCUMENT_CATEGORIES = [
-  { value: "kbis", label: "KBIS / extrait registre" },
-  { value: "invoices", label: "Factures clients" },
-  { value: "contracts", label: "Contrats clients" },
-  { value: "balance_sheet", label: "Bilan / liasse" },
-  { value: "bank_statements", label: "Relevés bancaires" },
-  { value: "other", label: "Autre" },
+  { value: "kbis", label: "KBIS / company registry" },
+  { value: "invoices", label: "Customer invoices" },
+  { value: "contracts", label: "Customer contracts" },
+  { value: "balance_sheet", label: "Balance sheet / accounts" },
+  { value: "bank_statements", label: "Bank statements" },
+  { value: "other", label: "Other" },
 ];
 
 export const SMB_STEPS: StepConfig[] = [
   {
     id: "identity",
-    title: "On commence par les bases",
+    title: "Let's start with the basics",
     subtitle:
-      "Le nom légal et le pays nous suffisent pour lancer une recherche en arrière-plan sur ta boîte.",
+      "Legal name and country are enough for us to kick off background research on your company.",
     fields: [
       {
         id: "legal_name",
         kind: "text-short",
-        label: "Nom légal de l'entreprise",
-        placeholder: "ex. Boulangerie Martin SAS",
+        label: "Company legal name",
+        placeholder: "e.g. Boulangerie Martin SAS",
         required: true,
         maxLength: 120,
       },
       {
         id: "country",
         kind: "chips",
-        label: "Pays",
+        label: "Country",
         options: COUNTRY_OPTIONS,
         required: true,
       },
       {
         id: "siret",
         kind: "text-short",
-        label: "SIRET (optionnel)",
+        label: "SIRET (optional)",
         helper:
-          "Si tu l'as sous la main, on récupère ton ancienneté et ton activité automatiquement.",
-        placeholder: "14 chiffres",
+          "If you have it handy, we'll pull your founding date and principal activity automatically.",
+        placeholder: "14 digits",
         visibleIf: (d) => d.country === "FR",
       },
       {
         id: "city",
         kind: "text-short",
-        label: "Ville",
-        placeholder: "ex. Lyon",
+        label: "City",
+        placeholder: "e.g. Lyon",
       },
     ],
   },
 
   {
     id: "activity",
-    title: "Ce que tu fais concrètement",
-    subtitle: "Pose un secteur, puis raconte en 1-2 phrases — l'IA peut polir.",
+    title: "What you actually do",
+    subtitle: "Pick a sector, then describe in 1-2 sentences — the AI can polish.",
     visibleIf: (d) => Boolean(d.legal_name) && Boolean(d.country),
     fields: [
       {
         id: "sector",
         kind: "chips",
-        label: "Secteur principal",
+        label: "Primary sector",
         options: SMB_SECTOR_OPTIONS,
         required: true,
       },
       {
         id: "activity_description",
         kind: "text-long-with-llm",
-        label: "Décris ton activité en quelques mots",
+        label: "Describe your activity in a few words",
         helper:
-          "Phrase brute : produits/services, clientèle, canal de vente. Le bouton « Enrichir » propose une version pitchée.",
+          "Plain sentence: products/services, customers, sales channel. The 'Enrich' button proposes a polished version.",
         placeholder:
-          "ex. On fabrique des cosmétiques bio en petite série, vendus en boutique à Lyon et sur notre site",
+          "e.g. We make small-batch organic cosmetics, sold in our Lyon shop and online",
         rows: 4,
         enrichKind: "smb_activity_description",
         required: true,
@@ -145,7 +145,7 @@ export const SMB_STEPS: StepConfig[] = [
       {
         id: "website",
         kind: "text-short",
-        label: "Site web (optionnel)",
+        label: "Website (optional)",
         placeholder: "https://",
       },
     ],
@@ -153,22 +153,22 @@ export const SMB_STEPS: StepConfig[] = [
 
   {
     id: "size",
-    title: "La taille de l'équipe et l'âge",
-    subtitle: "Choisis la tranche la plus proche — pas besoin d'être au chiffre près.",
+    title: "Team size and company age",
+    subtitle: "Pick the closest range — no need to be exact.",
     visibleIf: (d) => Boolean(d.sector),
     fields: [
       {
         id: "team_size_bucket",
         kind: "buckets",
-        label: "Effectif total",
+        label: "Total headcount",
         options: TEAM_SIZE_BUCKETS,
         required: true,
       },
       {
         id: "age_bucket",
         kind: "buckets",
-        label: "Âge de la boîte",
-        helper: "Pré-rempli si on trouve la date de création via SIRENE.",
+        label: "Years in business",
+        helper: "Pre-filled if we find the founding date via SIRENE.",
         options: AGE_BUCKETS,
         required: true,
       },
@@ -177,43 +177,43 @@ export const SMB_STEPS: StepConfig[] = [
 
   {
     id: "economics",
-    title: "L'économie de la boîte",
+    title: "Your business economics",
     subtitle:
-      "Tranches uniquement — c'est ce qui nous permet de proposer les bons financements.",
+      "Ranges only — that's enough for us to suggest the right financing options.",
     visibleIf: (d) => Boolean(d.team_size_bucket),
     fields: [
       {
         id: "monthly_revenue_bucket",
         kind: "buckets",
-        label: "Chiffre d'affaires mensuel",
+        label: "Monthly revenue",
         options: REVENUE_BUCKETS,
         required: true,
       },
       {
         id: "gross_margin_bucket",
         kind: "buckets",
-        label: "Marge brute approximative",
+        label: "Approximate gross margin",
         options: MARGIN_BUCKETS,
       },
       {
         id: "dso_bucket",
         kind: "buckets",
-        label: "Délai moyen de paiement de tes clients (DSO)",
+        label: "Average customer payment delay (DSO)",
         helper:
-          "Au cœur de notre offre : plus tes clients paient tard, plus l'avance sur facture a du sens.",
+          "Core to our offer: the longer your customers pay, the more invoice factoring makes sense.",
         options: DSO_BUCKETS,
         required: true,
       },
       {
         id: "seasonality",
         kind: "yes-no",
-        label: "Activité saisonnière ?",
+        label: "Seasonal business?",
       },
       {
         id: "seasonality_note",
         kind: "text-long-with-llm",
-        label: "Décris brièvement la saisonnalité",
-        helper: "Ex. pics été + Noël, creux janvier-février.",
+        label: "Briefly describe the seasonality",
+        helper: "e.g. summer + Christmas peaks, January-February low.",
         rows: 3,
         enrichKind: "smb_seasonality_note",
         visibleIf: (d) => d.seasonality === "yes",
@@ -223,9 +223,9 @@ export const SMB_STEPS: StepConfig[] = [
 
   {
     id: "documents",
-    title: "Justificatifs (optionnel mais recommandé)",
+    title: "Supporting documents (optional but recommended)",
     subtitle:
-      "Glisse-dépose tes documents généraux : KBIS, bilan, relevés. Ils enrichissent ton profil entreprise et seront accessibles aux prêteurs.",
+      "Drag and drop your general documents: KBIS, balance sheet, bank statements. They enrich your company profile and will be visible to investors.",
     visibleIf: (d) => Boolean(d.monthly_revenue_bucket),
     fields: [
       {

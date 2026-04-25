@@ -10,47 +10,47 @@ import type { StepConfig } from "./types";
  */
 
 const NEED_OPTIONS = [
-  { value: "invoice_advance", label: "Avance sur factures" },
-  { value: "working_capital", label: "BFR / trésorerie" },
-  { value: "stock_purchase", label: "Achat de stock" },
-  { value: "supplier_payment", label: "Paiement fournisseur" },
-  { value: "payroll", label: "Salaires" },
-  { value: "short_invest", label: "Investissement court" },
-  { value: "other", label: "Autre" },
+  { value: "invoice_advance", label: "Invoice factoring" },
+  { value: "working_capital", label: "Working capital / cash flow" },
+  { value: "stock_purchase", label: "Inventory purchase" },
+  { value: "supplier_payment", label: "Supplier payment" },
+  { value: "payroll", label: "Payroll" },
+  { value: "short_invest", label: "Short-term investment" },
+  { value: "other", label: "Other" },
 ];
 
 const DURATION_OPTIONS = [
-  { value: "30", label: "30 jours" },
-  { value: "60", label: "60 jours" },
-  { value: "90", label: "90 jours" },
-  { value: "180", label: "6 mois" },
+  { value: "30", label: "30 days" },
+  { value: "60", label: "60 days" },
+  { value: "90", label: "90 days" },
+  { value: "180", label: "6 months" },
 ];
 
 const URGENCY_OPTIONS = [
-  { value: "very_urgent", label: "Très urgent (< 48 h)" },
-  { value: "this_week", label: "Cette semaine" },
-  { value: "this_month", label: "Ce mois" },
+  { value: "very_urgent", label: "Very urgent (< 48h)" },
+  { value: "this_week", label: "This week" },
+  { value: "this_month", label: "This month" },
   { value: "flexible", label: "Flexible" },
 ];
 
 const NEED_DOCUMENT_CATEGORIES = [
-  { value: "invoices", label: "Factures concernées" },
-  { value: "purchase_orders", label: "Bons de commande" },
-  { value: "contracts", label: "Contrats clients liés" },
-  { value: "supplier_quotes", label: "Devis fournisseurs" },
-  { value: "other", label: "Autre justificatif" },
+  { value: "invoices", label: "Related invoices" },
+  { value: "purchase_orders", label: "Purchase orders" },
+  { value: "contracts", label: "Linked customer contracts" },
+  { value: "supplier_quotes", label: "Supplier quotes" },
+  { value: "other", label: "Other supporting document" },
 ];
 
 export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
   {
     id: "need_type",
-    title: "Quel est le besoin ?",
-    subtitle: "Tu peux en sélectionner plusieurs si la demande est mixte.",
+    title: "What's the need?",
+    subtitle: "You can pick several if the request is mixed.",
     fields: [
       {
         id: "needs",
         kind: "chips-multi",
-        label: "Type de besoin",
+        label: "Need type",
         options: NEED_OPTIONS,
         required: true,
         min: 1,
@@ -60,9 +60,9 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
 
   {
     id: "amount",
-    title: "Combien et sur combien de temps ?",
+    title: "How much and over what period?",
     subtitle:
-      "Indique le montant net dont tu as besoin et la durée sur laquelle tu rembourseras.",
+      "Set the net amount you need and the repayment duration.",
     visibleIf: (d) => {
       const arr = d.needs;
       return Array.isArray(arr) && arr.length > 0;
@@ -71,7 +71,7 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
       {
         id: "amount_eur",
         kind: "slider",
-        label: "Montant souhaité",
+        label: "Desired amount",
         min: 5_000,
         max: 500_000,
         step: 5_000,
@@ -81,7 +81,7 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
       {
         id: "duration_days",
         kind: "chips",
-        label: "Durée de remboursement souhaitée",
+        label: "Desired repayment duration",
         options: DURATION_OPTIONS,
         required: true,
       },
@@ -90,14 +90,14 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
 
   {
     id: "urgency",
-    title: "À quelle vitesse en as-tu besoin ?",
-    subtitle: "Cela aide les prêteurs à se positionner rapidement.",
+    title: "How fast do you need it?",
+    subtitle: "Helps investors react quickly.",
     visibleIf: (d) => Boolean(d.amount_eur) && Boolean(d.duration_days),
     fields: [
       {
         id: "urgency",
         kind: "chips",
-        label: "Urgence",
+        label: "Urgency",
         options: URGENCY_OPTIONS,
         required: true,
       },
@@ -106,19 +106,19 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
 
   {
     id: "context",
-    title: "Le contexte de la demande",
+    title: "Context of the request",
     subtitle:
-      "Une description courte permet aux prêteurs de comprendre le pourquoi. L'IA peut polir.",
+      "A short description helps investors understand the why. The AI can polish it.",
     visibleIf: (d) => Boolean(d.urgency),
     fields: [
       {
         id: "need_description",
         kind: "text-long-with-llm",
-        label: "Explique brièvement le besoin",
+        label: "Briefly describe the need",
         helper:
-          "Pose le contexte : opportunité commerciale, dépense imprévue, cash gap saisonnier, etc.",
+          "Set the context: business opportunity, unexpected expense, seasonal cash gap, etc.",
         placeholder:
-          "ex. Une grosse commande arrive, on doit avancer le stock pour livraison sous 30 jours — payé à 60 j par le client",
+          "e.g. A large order is coming in, we need to fund inventory for 30-day delivery — customer pays in 60 days",
         rows: 4,
         enrichKind: "smb_need_description",
         required: true,
@@ -128,9 +128,9 @@ export const CAMPAIGN_NEED_STEPS: StepConfig[] = [
 
   {
     id: "documents",
-    title: "Justificatifs spécifiques (optionnel)",
+    title: "Specific supporting documents (optional)",
     subtitle:
-      "Documents directement liés à CETTE demande (factures concernées, devis, contrat). Les documents généraux de l'entreprise sont déjà partagés via ton profil.",
+      "Documents directly tied to THIS request (related invoices, quotes, contracts). General company documents are already shared via your profile.",
     visibleIf: (d) => Boolean(d.need_description),
     fields: [
       {
