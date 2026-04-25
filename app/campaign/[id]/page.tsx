@@ -4,12 +4,17 @@ import { requireUser } from "@/lib/auth";
 import {
   getCampaignWithCompany,
   getDb,
+  getOnboardingForCompany,
   listCollateralsByCampaign,
   listRatingsForUser,
+  parseCampaignMeta,
+  type OnboardingDocument,
 } from "@/lib/db";
 import { DDSection } from "@/components/DDSection";
 import { RatingWidget } from "@/components/RatingWidget";
+import { CompanyOnboardingPanel } from "@/components/CompanyOnboardingPanel";
 import type { DDBrief } from "@/lib/ai/dd-analyst";
+import type { EnrichmentResult } from "@/lib/onboarding/types";
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -50,9 +55,23 @@ export default async function CampaignPage({
   const isOwner = co.user_id === user.id;
   const backHref = user.type === "investor" ? "/feed" : "/dashboard";
   const collaterals = listCollateralsByCampaign(camp.id);
+  const meta = parseCampaignMeta(camp);
   const cachedDD =
     user.type === "investor" ? getCachedDDBrief(co.id) : null;
   const ratings = listRatingsForUser(co.user_id);
+
+  const onboarding = getOnboardingForCompany(co.id);
+  const onboardingData = onboarding ? safeParseObject(onboarding.data_json) : {};
+  const onboardingDocs: OnboardingDocument[] = onboarding
+    ? safeParseArray<OnboardingDocument>(onboarding.documents_json)
+    : [];
+  const onboardingEnrichment: EnrichmentResult | null = onboarding?.enrichment_json
+    ? (safeParseObject(onboarding.enrichment_json) as EnrichmentResult)
+    : null;
+  const hasOnboardingData =
+    Object.keys(onboardingData).length > 0 ||
+    onboardingDocs.length > 0 ||
+    onboardingEnrichment !== null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -106,54 +125,46 @@ export default async function CampaignPage({
         </div>
       </header>
 
-      <section className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 rounded-lg border border-border p-5 sm:grid-cols-3">
-        <Field label="Capital seeking" value={fmtEur(camp.capital_seeking_eur)} />
-        <Field label="Founded" value={co.founded_year?.toString() ?? "—"} />
-        <Field label="Team size" value={co.team_size?.toString() ?? "—"} />
-        <Field
-          label="MRR"
-          value={
-            co.monthly_revenue_eur ? fmtEur(co.monthly_revenue_eur) : "—"
-          }
-        />
-        <Field
-          label="Burn / mo"
-          value={co.monthly_burn_eur ? fmtEur(co.monthly_burn_eur) : "—"}
-        />
-        <Field
-          label="Website"
-          value={
-            co.website ? (
-              <a
-                href={co.website}
-                target="_blank"
-                rel="noreferrer"
-                className="underline-offset-2 hover:underline"
-              >
-                {co.website.replace(/^https?:\/\//, "")}
-              </a>
-            ) : (
-              "—"
-            )
-          }
-        />
-      </section>
-
       <section className="mt-6 rounded-lg border border-border p-5">
         <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Use of funds
+          Détail du besoin
         </h2>
-        <p className="mt-2 text-sm leading-relaxed">{camp.use_of_funds}</p>
+        <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+          <Field
+            label="Montant"
+            value={fmtEur(camp.capital_seeking_eur)}
+          />
+          {meta.duration_days != null && (
+            <Field label="Durée" value={`${meta.duration_days} j`} />
+          )}
+          {meta.urgency && (
+            <Field
+              label="Urgence"
+              value={URGENCY_LABEL[meta.urgency] ?? meta.urgency}
+              tone={meta.urgency === "very_urgent" ? "warning" : undefined}
+            />
+          )}
+          {meta.need_types && meta.need_types.length > 0 && (
+            <Field
+              label="Type(s)"
+              value={meta.need_types
+                .map((n) => NEED_LABEL[n] ?? n)
+                .join(", ")}
+            />
+          )}
+        </div>
+        {(meta.need_description || camp.pitch_summary) && (
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {meta.need_description ?? camp.pitch_summary}
+          </p>
+        )}
+        {!meta.need_types && (
+          <p className="mt-3 text-xs italic text-muted-foreground">
+            Cette campagne a été créée avant le nouveau format ; détails
+            ci-dessous : {camp.use_of_funds}
+          </p>
+        )}
       </section>
-
-      {camp.pitch_summary && (
-        <section className="mt-6 rounded-lg border border-border p-5">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Pitch
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed">{camp.pitch_summary}</p>
-        </section>
-      )}
 
       <section className="mt-8">
         <div className="flex items-baseline justify-between gap-3">
@@ -229,6 +240,23 @@ export default async function CampaignPage({
         )}
       </section>
 
+      {hasOnboardingData && (user.type === "investor" || isOwner) && (
+        <section className="mt-8 space-y-2">
+          <h2 className="text-lg font-semibold">Profil détaillé de la PME</h2>
+          <p className="text-xs text-muted-foreground">
+            Données collectées lors de l&apos;onboarding et enrichissement
+            automatique (SIRENE + recherche web).
+          </p>
+          <div className="mt-3">
+            <CompanyOnboardingPanel
+              data={onboardingData}
+              documents={onboardingDocs}
+              enrichment={onboardingEnrichment}
+            />
+          </div>
+        </section>
+      )}
+
       {user.type === "investor" && (
         <section className="mt-8">
           <DDSection companyId={co.id} initialBrief={cachedDD} />
@@ -298,18 +326,65 @@ function Tag({ children }: { children: React.ReactNode }) {
 function Field({
   label,
   value,
+  tone,
 }: {
   label: string;
   value: React.ReactNode;
+  tone?: "warning";
 }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm font-medium">{value}</dd>
+      <dd
+        className={
+          tone === "warning"
+            ? "mt-0.5 text-sm font-medium text-amber-700 dark:text-amber-400"
+            : "mt-0.5 text-sm font-medium"
+        }
+      >
+        {value}
+      </dd>
     </div>
   );
+}
+
+const NEED_LABEL: Record<string, string> = {
+  invoice_advance: "Avance sur factures",
+  working_capital: "BFR",
+  stock_purchase: "Achat de stock",
+  supplier_payment: "Paiement fournisseur",
+  payroll: "Salaires",
+  short_invest: "Investissement court",
+  other: "Autre",
+};
+
+const URGENCY_LABEL: Record<string, string> = {
+  very_urgent: "Très urgent (< 48 h)",
+  this_week: "Cette semaine",
+  this_month: "Ce mois",
+  flexible: "Flexible",
+};
+
+function safeParseObject(s: string | null): Record<string, unknown> {
+  if (!s) return {};
+  try {
+    const v = JSON.parse(s);
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+function safeParseArray<T>(s: string | null): T[] {
+  if (!s) return [];
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? (v as T[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 function fmtEur(n: number): string {

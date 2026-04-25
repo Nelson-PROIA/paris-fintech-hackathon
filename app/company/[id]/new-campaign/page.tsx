@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { getCompanyById } from "@/lib/db";
-import { NewCampaignClient } from "./NewCampaignClient";
+import { CampaignNeedFlow } from "@/components/onboarding/CampaignNeedFlow";
 
 export default async function NewCampaignPage({
   params,
@@ -16,22 +16,26 @@ export default async function NewCampaignPage({
   if (company.user_id !== user.id) redirect(`/company/${id}`);
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto max-w-3xl px-6 py-12">
       <Link
         href={`/company/${id}`}
         className="text-sm text-muted-foreground hover:text-foreground"
       >
-        ← Back to {company.name}
+        ← Retour à {company.name}
       </Link>
-      <header className="mt-6">
+      <header className="mt-6 space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">
-          New campaign
+          Nouvelle demande de financement
         </h1>
-        <p className="mt-1 text-muted-foreground">
-          Add another fundraising campaign for {company.name}.
+        <p className="text-muted-foreground">
+          Quelques questions sur le besoin uniquement — ton profil entreprise
+          ({company.name}) est déjà partagé avec les prêteurs.
         </p>
       </header>
-      <NewCampaignClient companyId={id} />
+
+      <div className="mt-8">
+        <CampaignNeedFlow companyId={id} />
+      </div>
     </main>
   );
 }

@@ -1,4 +1,5 @@
-import { requireRole } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { hasInvestorOnboarded, requireRole } from "@/lib/auth";
 import { TopNav } from "@/components/TopNav";
 
 export default async function InvestorLayout({
@@ -6,7 +7,10 @@ export default async function InvestorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireRole("investor");
+  const user = await requireRole("investor");
+  if (!hasInvestorOnboarded(user.id)) {
+    redirect("/onboard-investor");
+  }
   return (
     <>
       <TopNav role="investor" />

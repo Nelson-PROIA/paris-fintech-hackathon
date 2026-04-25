@@ -21,7 +21,7 @@ export function SelectRoleClient() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `Request failed (${res.status})`);
       }
-      router.push(type === "smb" ? "/dashboard" : "/feed");
+      router.push(type === "smb" ? "/onboard" : "/onboard-investor");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

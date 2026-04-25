@@ -13,30 +13,33 @@ export default async function SMBDashboardPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
           <p className="mt-1 text-muted-foreground">
             {companies.length === 0
-              ? `Welcome, ${user.display_name ?? user.email}.`
-              : `${companies.length} compan${companies.length === 1 ? "y" : "ies"} on file.`}
+              ? `Bienvenue, ${user.display_name ?? user.email}.`
+              : `${companies.length} entreprise${companies.length === 1 ? "" : "s"} sur la plateforme.`}
           </p>
         </div>
-        <Link
-          href="/onboard"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-        >
-          + Add a company
-        </Link>
+        {companies.length === 0 && (
+          <Link
+            href="/onboard"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            + Onboarder ma boîte
+          </Link>
+        )}
       </div>
 
       <section className="mt-10 space-y-6">
         {companies.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <h2 className="text-lg font-semibold">No companies yet</h2>
+            <h2 className="text-lg font-semibold">Pas encore d&apos;entreprise</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tell us about your business in a quick conversation.
+              Décris ta boîte en quelques étapes — presets, drag-and-drop pour
+              les documents, l&apos;IA t&apos;aide à formuler.
             </p>
             <Link
               href="/onboard"
               className="mt-4 inline-block rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Onboard your first company
+              Lancer l&apos;onboarding
             </Link>
           </div>
         ) : (
@@ -54,10 +57,16 @@ export default async function SMBDashboardPage() {
                   >
                     {co.name}
                   </Link>
-                  <div className="flex flex-wrap gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
                     {co.sector && <Tag>{co.sector}</Tag>}
                     {co.stage && <Tag>{co.stage}</Tag>}
                     {co.country && <Tag>{co.country}</Tag>}
+                    <Link
+                      href={`/company/${co.id}/new-campaign`}
+                      className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+                    >
+                      + Demander un financement
+                    </Link>
                   </div>
                 </div>
                 {co.pitch && (
@@ -66,18 +75,25 @@ export default async function SMBDashboardPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                      Campaigns ({campaigns.length})
+                      Campagnes ({campaigns.length})
                     </h3>
                     <Link
                       href={`/company/${co.id}#campaigns`}
                       className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                     >
-                      manage →
+                      gérer →
                     </Link>
                   </div>
                   {campaigns.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No active campaigns. Add one from the company page.
+                      Aucune campagne active.{" "}
+                      <Link
+                        href={`/company/${co.id}/new-campaign`}
+                        className="underline-offset-2 hover:underline"
+                      >
+                        Lancer ta première demande
+                      </Link>
+                      .
                     </p>
                   ) : (
                     <ul className="divide-y divide-border rounded-md border border-border">
@@ -126,7 +142,7 @@ function Tag({ children }: { children: React.ReactNode }) {
 }
 
 function fmtEur(n: number): string {
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,

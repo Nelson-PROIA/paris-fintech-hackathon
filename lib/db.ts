@@ -153,7 +153,42 @@ function bootstrap(db: Database.Database): void {
       result_json TEXT NOT NULL,
       generated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS onboarding_profiles (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      type TEXT NOT NULL CHECK(type IN ('smb','investor')),
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','submitted')),
+      data_json TEXT NOT NULL DEFAULT '{}',
+      documents_json TEXT NOT NULL DEFAULT '[]',
+      enrichment_json TEXT,
+      enrichment_status TEXT NOT NULL DEFAULT 'idle'
+        CHECK(enrichment_status IN ('idle','running','done','error')),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      UNIQUE(user_id, type)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_onboarding_user ON onboarding_profiles(user_id);
   `);
+
+  // Idempotent column additions (SQLite doesn't support IF NOT EXISTS on
+  // ALTER TABLE ADD COLUMN, so we swallow the duplicate-column error).
+  addColumnIfMissing(db, "campaigns", "meta_json", "TEXT");
+}
+
+function addColumnIfMissing(
+  db: Database.Database,
+  table: string,
+  column: string,
+  type: string
+): void {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/duplicate column name/i.test(msg)) throw e;
+  }
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -197,7 +232,26 @@ export type CampaignRow = {
   use_of_funds: string;
   pitch_summary: string | null;
   status: CampaignStatus;
+  /**
+   * Free-form JSON describing the financing need (need types, urgency,
+   * duration, description, optional doc refs). Decoupled from the company
+   * profile, which lives in onboarding_profiles for the SMB.
+   */
+  meta_json: string | null;
   created_at: number;
+};
+
+/**
+ * Typed view of CampaignRow.meta_json. Optional fields — older campaigns
+ * predating the new flow won't have any of these.
+ */
+export type CampaignMeta = {
+  need_types?: string[];
+  urgency?: "very_urgent" | "this_week" | "this_month" | "flexible";
+  duration_days?: number;
+  need_description?: string;
+  /** Optional ids of documents (linked to the SMB's onboarding documents) the user wants to highlight */
+  document_ids?: string[];
 };
 
 export type CollateralType =
@@ -333,8 +387,12 @@ export function listCountries(): string[] {
 
 // ── Campaign helpers ─────────────────────────────────────────────────────────
 
-export type CreateCampaignInput = Omit<CampaignRow, "id" | "created_at"> & {
+export type CreateCampaignInput = Omit<
+  CampaignRow,
+  "id" | "created_at" | "meta_json"
+> & {
   id?: string;
+  meta_json?: string | null;
 };
 
 export function createCampaign(data: CreateCampaignInput): CampaignRow {
@@ -344,13 +402,32 @@ export function createCampaign(data: CreateCampaignInput): CampaignRow {
   db.prepare(
     `INSERT INTO campaigns (
       id, company_id, title, capital_seeking_eur, use_of_funds,
-      pitch_summary, status, created_at
+      pitch_summary, status, meta_json, created_at
     ) VALUES (
       @id, @company_id, @title, @capital_seeking_eur, @use_of_funds,
-      @pitch_summary, @status, @created_at
+      @pitch_summary, @status, @meta_json, @created_at
     )`
-  ).run({ ...data, id, created_at: now });
+  ).run({
+    ...data,
+    id,
+    meta_json: data.meta_json ?? null,
+    created_at: now,
+  });
   return getCampaignById(id)!;
+}
+
+/**
+ * Parse a campaign's meta_json into a typed view. Returns an empty object
+ * when null or invalid so callers can spread without checks.
+ */
+export function parseCampaignMeta(row: CampaignRow): CampaignMeta {
+  if (!row.meta_json) return {};
+  try {
+    const v = JSON.parse(row.meta_json);
+    return v && typeof v === "object" ? (v as CampaignMeta) : {};
+  } catch {
+    return {};
+  }
 }
 
 export function getCampaignById(id: string): CampaignRow | null {
@@ -420,6 +497,7 @@ export function listCampaigns(
       camp.use_of_funds  AS use_of_funds,
       camp.pitch_summary AS pitch_summary,
       camp.status        AS status,
+      camp.meta_json     AS meta_json,
       camp.created_at    AS created_at,
       co.id              AS co_id,
       co.user_id         AS co_user_id,
@@ -455,6 +533,7 @@ export function listCampaigns(
     use_of_funds: r.use_of_funds as string,
     pitch_summary: (r.pitch_summary as string) ?? null,
     status: r.status as CampaignStatus,
+    meta_json: (r.meta_json as string | null) ?? null,
     created_at: r.created_at as number,
     company: {
       id: r.co_id as string,
@@ -699,4 +778,176 @@ export function listRatingsForUser(userId: string): RatingRow[] {
       "SELECT * FROM ratings WHERE rated_user_id = ? ORDER BY created_at DESC LIMIT 20"
     )
     .all(userId) as RatingRow[];
+}
+
+// ── Onboarding profiles ──────────────────────────────────────────────────────
+
+export type OnboardingType = "smb" | "investor";
+export type OnboardingStatus = "draft" | "submitted";
+export type EnrichmentStatus = "idle" | "running" | "done" | "error";
+
+export type OnboardingProfileRow = {
+  id: string;
+  user_id: string;
+  type: OnboardingType;
+  status: OnboardingStatus;
+  data_json: string;
+  documents_json: string;
+  enrichment_json: string | null;
+  enrichment_status: EnrichmentStatus;
+  created_at: number;
+  updated_at: number;
+};
+
+export type OnboardingDocument = {
+  id: string;
+  filename: string;
+  url: string;
+  mime: string;
+  size: number;
+  category: string | null;
+  uploaded_at: number;
+};
+
+export function getOnboardingProfile(
+  userId: string,
+  type: OnboardingType
+): OnboardingProfileRow | null {
+  return (
+    (getDb()
+      .prepare(
+        "SELECT * FROM onboarding_profiles WHERE user_id = ? AND type = ?"
+      )
+      .get(userId, type) as OnboardingProfileRow | undefined) ?? null
+  );
+}
+
+export function ensureOnboardingProfile(
+  userId: string,
+  type: OnboardingType
+): OnboardingProfileRow {
+  const existing = getOnboardingProfile(userId, type);
+  if (existing) return existing;
+  const id = randomUUID();
+  const now = Date.now();
+  getDb()
+    .prepare(
+      `INSERT INTO onboarding_profiles
+         (id, user_id, type, status, data_json, documents_json, enrichment_json, enrichment_status, created_at, updated_at)
+         VALUES (?, ?, ?, 'draft', '{}', '[]', NULL, 'idle', ?, ?)`
+    )
+    .run(id, userId, type, now, now);
+  return getOnboardingProfile(userId, type)!;
+}
+
+export function mergeOnboardingData(
+  userId: string,
+  type: OnboardingType,
+  patch: Record<string, unknown>
+): OnboardingProfileRow {
+  const profile = ensureOnboardingProfile(userId, type);
+  const current = safeJson<Record<string, unknown>>(profile.data_json, {});
+  const merged = { ...current, ...patch };
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET data_json = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(JSON.stringify(merged), Date.now(), profile.id);
+  return getOnboardingProfile(userId, type)!;
+}
+
+export function appendOnboardingDocument(
+  userId: string,
+  type: OnboardingType,
+  doc: OnboardingDocument
+): OnboardingProfileRow {
+  const profile = ensureOnboardingProfile(userId, type);
+  const docs = safeJson<OnboardingDocument[]>(profile.documents_json, []);
+  docs.push(doc);
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET documents_json = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(JSON.stringify(docs), Date.now(), profile.id);
+  return getOnboardingProfile(userId, type)!;
+}
+
+export function updateOnboardingDocument(
+  userId: string,
+  type: OnboardingType,
+  documentId: string,
+  patch: Partial<Pick<OnboardingDocument, "category">>
+): OnboardingProfileRow {
+  const profile = ensureOnboardingProfile(userId, type);
+  const docs = safeJson<OnboardingDocument[]>(profile.documents_json, []);
+  const next = docs.map((d) =>
+    d.id === documentId ? { ...d, ...patch } : d
+  );
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET documents_json = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(JSON.stringify(next), Date.now(), profile.id);
+  return getOnboardingProfile(userId, type)!;
+}
+
+export function setEnrichmentStatus(
+  userId: string,
+  type: OnboardingType,
+  status: EnrichmentStatus
+): void {
+  const profile = ensureOnboardingProfile(userId, type);
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET enrichment_status = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(status, Date.now(), profile.id);
+}
+
+export function setEnrichmentResult(
+  userId: string,
+  type: OnboardingType,
+  result: unknown,
+  status: EnrichmentStatus = "done"
+): void {
+  const profile = ensureOnboardingProfile(userId, type);
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET enrichment_json = ?, enrichment_status = ?, updated_at = ? WHERE id = ?"
+    )
+    .run(JSON.stringify(result), status, Date.now(), profile.id);
+}
+
+/**
+ * Resolve the SMB onboarding profile for a given company id by joining through
+ * the company's user_id. Used by the lender-facing campaign view to surface
+ * rich profile data.
+ */
+export function getOnboardingForCompany(
+  companyId: string
+): OnboardingProfileRow | null {
+  const co = getCompanyById(companyId);
+  if (!co) return null;
+  return getOnboardingProfile(co.user_id, "smb");
+}
+
+export function markOnboardingSubmitted(
+  userId: string,
+  type: OnboardingType
+): void {
+  const profile = ensureOnboardingProfile(userId, type);
+  getDb()
+    .prepare(
+      "UPDATE onboarding_profiles SET status = 'submitted', updated_at = ? WHERE id = ?"
+    )
+    .run(Date.now(), profile.id);
+}
+
+function safeJson<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
 }

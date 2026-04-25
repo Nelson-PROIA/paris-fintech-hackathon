@@ -1,15 +1,25 @@
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getRoleFromClerk } from "@/lib/auth";
+import {
+  getRoleFromClerk,
+  hasInvestorOnboarded,
+  hasSmbOnboarded,
+} from "@/lib/auth";
 
 export default async function HomePage() {
   const { userId } = await auth();
 
   if (userId) {
     const { role } = await getRoleFromClerk(userId);
-    if (role === "smb") redirect("/dashboard");
-    if (role === "investor") redirect("/feed");
+    if (role === "smb") {
+      redirect(hasSmbOnboarded(userId) ? "/dashboard" : "/onboard");
+    }
+    if (role === "investor") {
+      redirect(
+        hasInvestorOnboarded(userId) ? "/feed" : "/onboard-investor"
+      );
+    }
     redirect("/select-role");
   }
 
