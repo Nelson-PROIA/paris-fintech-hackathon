@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import {
   upsertUser,
   getUserByClerkId,
+  getInvestorByUserId,
+  getOnboardingProfile,
+  listCompaniesByUserId,
   type UserRow,
   type UserType,
 } from "@/lib/db";
@@ -47,6 +50,29 @@ export async function requireRole(type: UserType): Promise<UserRow> {
     redirect(type === "smb" ? "/feed" : "/dashboard");
   }
   return user;
+}
+
+/**
+ * True if the investor has either submitted the onboarding form OR has a
+ * pre-existing investor row (legacy seed). Used by the investor layout to
+ * decide whether to force the new user through /onboard-investor.
+ */
+export function hasInvestorOnboarded(userId: string): boolean {
+  const investor = getInvestorByUserId(userId);
+  if (investor && investor.thesis_text) return true;
+  const profile = getOnboardingProfile(userId, "investor");
+  return profile?.status === "submitted";
+}
+
+/**
+ * True if the SMB user has at least one company in the legacy schema OR a
+ * submitted onboarding profile. Used by /dashboard or home routing.
+ */
+export function hasSmbOnboarded(userId: string): boolean {
+  const companies = listCompaniesByUserId(userId);
+  if (companies.length > 0) return true;
+  const profile = getOnboardingProfile(userId, "smb");
+  return profile?.status === "submitted";
 }
 
 export async function setUserRole(type: UserType): Promise<UserRow> {
