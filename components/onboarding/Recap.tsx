@@ -43,19 +43,13 @@ export function Recap({
   submitButtonLabel,
 }: Props) {
   return (
-    <section className="surface-paper relative space-y-5 overflow-hidden p-6">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
-      />
+    <section className="space-y-5 rounded-xl border border-border bg-card p-6">
       <header>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Summary
         </div>
-        <h2 className="mt-1 font-serif text-2xl font-semibold tracking-tight">
-          Almost there.{" "}
-          <span className="serif-italic gradient-headline">Review</span> and
-          submit.
+        <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
+          Almost there. Review and submit.
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Everything is editable after submission. Range fields are stored as
@@ -69,16 +63,16 @@ export function Recap({
           return (
             <div
               key={step.id}
-              className="rounded-lg border border-border bg-card/70 p-3.5 transition hover:border-brand/30"
+              className="rounded-lg border border-border bg-card p-3.5 transition hover:border-foreground/30"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="font-serif text-sm font-semibold tracking-tight">
+                <h3 className="text-sm font-semibold tracking-[-0.01em]">
                   {step.title}
                 </h3>
                 <button
                   type="button"
                   onClick={() => onEditStep(step.id)}
-                  className="rounded border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:border-brand/30 hover:text-foreground"
+                  className="rounded border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:border-foreground/30 hover:text-foreground"
                 >
                   edit
                 </button>
@@ -181,7 +175,7 @@ export function Recap({
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90 disabled:opacity-50"
         >
           {submitting ? (
             "In progress…"

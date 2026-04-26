@@ -43,17 +43,22 @@ export function TopNav({ role }: { role: "smb" | "investor" }) {
                   <Link
                     href={l.href}
                     className={cn(
-                      "relative rounded-md px-3 py-1.5 transition",
+                      "group relative px-3 py-1.5 transition",
                       l.action
-                        ? "text-foreground font-medium hover:bg-accent"
+                        ? "ml-2 rounded-md border border-border bg-card font-medium text-foreground hover:border-foreground/30"
                         : active
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {l.label}
-                    {!l.action && active && (
-                      <span className="pointer-events-none absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand" />
+                    {!l.action && (
+                      <span
+                        className={cn(
+                          "pointer-events-none absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
+                          active ? "bg-foreground" : "bg-transparent group-hover:bg-foreground/30"
+                        )}
+                      />
                     )}
                   </Link>
                 </li>

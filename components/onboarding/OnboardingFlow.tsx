@@ -284,7 +284,7 @@ export function OnboardingFlow({
                   <button
                     type="button"
                     onClick={() => setEditingStepId(null)}
-                    className="gradient-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-1.5 text-sm font-semibold text-background transition hover:opacity-90"
                   >
                     Continue
                     <svg

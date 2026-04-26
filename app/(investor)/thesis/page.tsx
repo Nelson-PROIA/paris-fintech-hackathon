@@ -5,7 +5,6 @@ import {
   listSectors,
 } from "@/lib/db";
 import { ThesisClient } from "./ThesisClient";
-import { Badge } from "@/components/ui/badge";
 
 export default async function ThesisPage() {
   const user = await requireRole("investor");
@@ -49,13 +48,11 @@ export default async function ThesisPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-6">
-        <Badge variant="brand" className="mb-3 px-3 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Your investing rules
-        </Badge>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          Your{" "}
-          <span className="serif-italic gradient-headline">thesis</span>.
+        </p>
+        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-[-0.025em]">
+          Your thesis.
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           Set what you&apos;re looking for. The AI uses this to rank deals on

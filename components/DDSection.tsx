@@ -127,50 +127,41 @@ export function DDSection({
   // No brief yet — show CTA
   if (!data && !showStream) {
     return (
-      <section className="surface-paper relative overflow-hidden p-7">
-        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-35" />
-        <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-brand/20 blur-3xl" />
-        <div className="relative">
-          <Badge variant="brand" className="mb-3 px-3 py-1">
-            <Spark />
-            Agent on demand
-          </Badge>
-          <h3 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">
-            One-page DD brief, in{" "}
-            <span className="serif-italic gradient-headline">
-              &lt; 30 seconds.
+      <section className="rounded-xl border border-border bg-card p-7">
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Agent on demand
+        </p>
+        <h3 className="mt-2 text-2xl font-semibold tracking-[-0.02em] md:text-3xl">
+          One-page DD brief, in &lt; 30 seconds.
+        </h3>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          An AI analyst hits the web, reads the company website, checks the
+          SIRENE registry if French, and structures findings into a brief
+          with risk flags and cited sources. Watch it work live.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={generate}
+            className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
+          >
+            Run DD agent
+          </button>
+          <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+              Web search
             </span>
-          </h3>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            An AI analyst hits the web, reads the company website, checks the
-            SIRENE registry if French, and structures findings into a brief
-            with risk flags and cited sources. Watch it work live.
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={generate}
-              className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-lift ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
-            >
-              <Spark />
-              Run DD agent
-            </button>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
-                Web search
-              </span>
-              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
-                Page fetch
-              </span>
-              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
-                SIRENE lookup
-              </span>
+            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+              Page fetch
             </span>
-          </div>
-          {error && (
-            <p className="mt-3 text-sm text-destructive">Error: {error}</p>
-          )}
+            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+              SIRENE lookup
+            </span>
+          </span>
         </div>
+        {error && (
+          <p className="mt-3 text-sm text-destructive">Error: {error}</p>
+        )}
       </section>
     );
   }
@@ -224,25 +215,16 @@ function AgentLog({
   streaming: boolean;
 }) {
   return (
-    <div className="surface-paper relative overflow-hidden p-5">
-      <div
-        className={`absolute inset-x-0 top-0 h-px ${
-          streaming
-            ? "bg-gradient-to-r from-transparent via-brand to-transparent shimmer"
-            : "bg-border"
-        }`}
-      />
+    <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
         <span
           className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
-            streaming ? "gradient-conic animate-spin-slow" : "bg-muted"
+            streaming ? "border border-brand/40 bg-brand/10 animate-pulse-soft" : "bg-muted"
           }`}
         >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-card text-brand">
-            <Spark />
-          </span>
+          <span className="flex h-2 w-2 rounded-full bg-brand" />
         </span>
-        <h3 className="font-serif text-base font-semibold tracking-tight">
+        <h3 className="text-base font-semibold tracking-[-0.015em]">
           DD Agent
         </h3>
         <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -296,7 +278,9 @@ function AgentLog({
                       key={ev.stepIndex}
                       className="animate-fade-in-up flex items-start gap-2 text-xs"
                     >
-                      <span className="mt-0.5">{toolEmoji(ev.tool)}</span>
+                      <span className="mt-0.5 inline-flex h-4 min-w-[2rem] items-center justify-center rounded border border-border bg-card px-1 font-mono text-[9px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {toolLabel(ev.tool)}
+                      </span>
                       <div className="min-w-0 flex-1">
                         <div className="font-mono text-[11px]">
                           <span className="text-brand">{ev.tool}</span>
@@ -356,10 +340,10 @@ function StageDot({ state }: { state: StageState["state"] }) {
   );
 }
 
-function toolEmoji(tool: ToolEvent["tool"]): string {
-  if (tool === "webSearch") return "🔍";
+function toolLabel(tool: ToolEvent["tool"]): string {
+  if (tool === "webSearch") return "WEB";
   if (tool === "fetchUrl") return "URL";
-  return "🏛️";
+  return "REG";
 }
 
 function summariseInput(tool: ToolEvent["tool"], input: unknown): string {
@@ -385,10 +369,3 @@ function truncate(s: string, n: number): string {
   return s.slice(0, n - 1) + "…";
 }
 
-function Spark() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="text-brand">
-      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
-    </svg>
-  );
-}

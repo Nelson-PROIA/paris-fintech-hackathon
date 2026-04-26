@@ -114,13 +114,9 @@ export function MessageInputWithAI({
       )}
 
       {proposal && (
-        <div className="surface-paper relative space-y-3 overflow-hidden p-3.5">
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
-          />
+        <div className="space-y-3 rounded-lg border border-border bg-card p-3.5">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-brand">
               AI proposal
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
@@ -147,7 +143,7 @@ export function MessageInputWithAI({
             <button
               type="button"
               onClick={accept}
-              className="gradient-brand inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105"
+              className="inline-flex items-center gap-1 rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90"
             >
               Accept and replace
             </button>

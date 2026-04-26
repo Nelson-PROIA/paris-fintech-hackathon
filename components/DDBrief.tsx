@@ -1,6 +1,7 @@
 import type { DDBrief } from "@/lib/ai/dd-analyst";
 import { Badge } from "@/components/ui/badge";
 
+
 const SEVERITY_LABEL: Record<DDBrief["riskFlags"][number]["severity"], string> = {
   low: "Low",
   medium: "Medium",
@@ -26,15 +27,13 @@ export function DDBriefView({
   cached: boolean;
 }) {
   return (
-    <article className="surface-paper relative overflow-hidden p-6">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent" />
-      <header className="relative flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+    <article className="rounded-xl border border-border bg-card p-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <Badge variant="brand" className="px-3 py-1">
-            <Spark /> AI due diligence
-          </Badge>
-          <h2 className="mt-2 font-serif text-2xl font-semibold tracking-tight md:text-3xl">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            AI due diligence
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] md:text-3xl">
             One-page brief
           </h2>
           <p className="mt-1 flex items-center gap-2 text-xs">
@@ -51,14 +50,14 @@ export function DDBriefView({
         <SentimentGauge score={brief.sentimentScore} />
       </header>
 
-      <div className="relative mt-6 grid gap-5 md:grid-cols-2">
-        <Section title="Overview" body={brief.overview} icon="" wide />
-        <Section title="Traction" body={brief.traction} icon="" />
-        <Section title="Team" body={brief.team} icon="" />
-        <Section title="Market context" body={brief.marketContext} icon="" wide />
+      <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <Section title="Overview" body={brief.overview} wide />
+        <Section title="Traction" body={brief.traction} />
+        <Section title="Team" body={brief.team} />
+        <Section title="Market context" body={brief.marketContext} wide />
       </div>
 
-      <section className="relative mt-6">
+      <section className="mt-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Risk flags
@@ -70,7 +69,7 @@ export function DDBriefView({
         </div>
         {brief.riskFlags.length === 0 ? (
           <div className="mt-2 rounded-lg border border-success/30 bg-success/5 p-3 text-sm text-success">
-            ✓ No material risks surfaced from this pass.
+            No material risks surfaced from this pass.
           </div>
         ) : (
           <ul className="mt-3 grid gap-2 md:grid-cols-2">
@@ -94,7 +93,7 @@ export function DDBriefView({
         )}
       </section>
 
-      <section className="relative mt-6">
+      <section className="mt-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Sources
@@ -113,7 +112,7 @@ export function DDBriefView({
             {brief.evidence.map((e, i) => (
               <li
                 key={i}
-                className="rounded-lg border border-border bg-card/60 p-3 text-sm transition hover:border-brand/40"
+                className="rounded-lg border border-border bg-card p-3 text-sm transition hover:border-foreground/30"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{e.source}</span>
@@ -122,9 +121,13 @@ export function DDBriefView({
                       href={e.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-brand underline-offset-2 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs text-brand underline-offset-2 hover:underline"
                     >
-                      {hostname(e.url)} ↗
+                      {hostname(e.url)}
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M7 17 17 7" />
+                        <path d="M7 7h10v10" />
+                      </svg>
                     </a>
                   )}
                 </div>
@@ -143,20 +146,17 @@ export function DDBriefView({
 function Section({
   title,
   body,
-  icon,
   wide,
 }: {
   title: string;
   body: string;
-  icon: string;
   wide?: boolean;
 }) {
   return (
     <section
-      className={`rounded-lg border border-border bg-card/40 p-4 ${wide ? "md:col-span-2" : ""}`}
+      className={`rounded-lg border border-border bg-card p-4 ${wide ? "md:col-span-2" : ""}`}
     >
-      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        <span aria-hidden>{icon}</span>
+      <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {title}
       </h3>
       <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{body}</p>
@@ -213,14 +213,6 @@ function SentimentGauge({ score }: { score: number }) {
         <div className="text-xs text-muted-foreground">conviction</div>
       </div>
     </div>
-  );
-}
-
-function Spark() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
-    </svg>
   );
 }
 

@@ -97,22 +97,16 @@ export function DocumentDropZone({
         className={cn(
           "group relative flex cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border-2 border-dashed px-6 py-10 text-sm transition-all duration-200",
           dragOver
-            ? "border-brand/60 bg-brand-muted/40 shadow-lift"
-            : "border-border bg-card/40 hover:border-brand/30 hover:bg-card/70"
+            ? "border-foreground/40 bg-accent"
+            : "border-border bg-card hover:border-foreground/30"
         )}
       >
-        {dragOver && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 gradient-mesh opacity-40"
-          />
-        )}
         <span
           className={cn(
-            "relative flex h-11 w-11 items-center justify-center rounded-xl transition",
+            "flex h-11 w-11 items-center justify-center rounded-lg transition",
             dragOver
-              ? "gradient-brand text-brand-foreground shadow-lift ring-1 ring-inset ring-white/30"
-              : "border border-border bg-card text-muted-foreground group-hover:border-brand/30 group-hover:text-brand"
+              ? "bg-foreground text-background"
+              : "border border-border bg-card text-muted-foreground"
           )}
         >
           <svg
@@ -131,8 +125,8 @@ export function DocumentDropZone({
             <path d="m8 17 4-4 4 4" />
           </svg>
         </span>
-        <div className="relative text-center">
-          <p className="font-serif text-base font-semibold tracking-tight">
+        <div className="text-center">
+          <p className="text-base font-semibold tracking-[-0.01em]">
             {dragOver ? "Drop to upload" : "Drag and drop your documents"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">

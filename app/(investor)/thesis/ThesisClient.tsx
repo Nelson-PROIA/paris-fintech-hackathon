@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FilterChips } from "@/components/FilterChips";
-import { FilterModeTabs } from "@/components/FilterModeTabs";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
+import { humanize } from "@/lib/format";
 import type { PortfolioFilterParse } from "@/lib/ai/parse-query";
 
 type Stage = "pre_revenue" | "early" | "growth";
@@ -50,11 +50,22 @@ export function ThesisClient({
 
   const [naturalText, setNaturalText] = useState("");
   const [parsedSummary, setParsedSummary] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [status, setStatus] = useState<
     "idle" | "parsing" | "saving" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+
+  const filterCount =
+    sectors.length +
+    countries.length +
+    stages.length +
+    (ticketMin ? 1 : 0) +
+    (ticketMax ? 1 : 0) +
+    (totalCapital ? 1 : 0) +
+    (risk !== "medium" ? 1 : 0) +
+    (thesisText ? 1 : 0);
 
   async function save(values: {
     thesisText: string;
@@ -97,6 +108,7 @@ export function ThesisClient({
   }
 
   async function handleManualSave() {
+    setFiltersOpen(false);
     await save({
       thesisText,
       sectors,
@@ -128,7 +140,8 @@ export function ThesisClient({
       const parsed: PortfolioFilterParse = await res.json();
       if (!res.ok)
         throw new Error(
-          (parsed as unknown as { error?: string }).error ?? `HTTP ${res.status}`
+          (parsed as unknown as { error?: string }).error ??
+            `HTTP ${res.status}`
         );
 
       const nextSectors = (parsed.sectors ?? sectors).filter((s) =>
@@ -172,141 +185,22 @@ export function ThesisClient({
     }
   }
 
-  function toggleStage(s: Stage) {
-    setStages((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
-  }
-
-  const submitting = status === "saving" || status === "parsing";
-
-  const manualPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleManualSave();
-      }}
-      className="surface-paper space-y-5 p-5"
-    >
-      <Field label={`Sectors (${sectors.length || "any"})`}>
-        <FilterChips
-          options={allSectors}
-          selected={sectors}
-          onChange={setSectors}
-        />
-      </Field>
-
-      <Field label={`Countries (${countries.length || "any"})`}>
-        <FilterChips
-          options={allCountries}
-          selected={countries}
-          onChange={setCountries}
-        />
-      </Field>
-
-      <Field label={`Stages (${stages.length || "any"})`}>
-        <FilterChips
-          options={STAGES}
-          selected={stages}
-          onChange={(next) => setStages(next as Stage[])}
-        />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Field label="Ticket min (€)">
-          <input
-            type="number"
-            value={ticketMin}
-            onChange={(e) => setTicketMin(e.target.value)}
-            min={0}
-            step={10000}
-            placeholder="any"
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-        <Field label="Ticket max (€)">
-          <input
-            type="number"
-            value={ticketMax}
-            onChange={(e) => setTicketMax(e.target.value)}
-            min={0}
-            step={10000}
-            placeholder="any"
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-        <Field label="Total capital (€)">
-          <input
-            type="number"
-            value={totalCapital}
-            onChange={(e) => setTotalCapital(e.target.value)}
-            min={0}
-            step={50000}
-            placeholder="optional"
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-        <Field label="Risk tolerance">
-          <select
-            value={risk}
-            onChange={(e) => setRisk(e.target.value as Risk)}
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </Field>
-      </div>
-
-      <Field label="Free-form thesis">
-        <textarea
-          value={thesisText}
-          onChange={(e) => setThesisText(e.target.value)}
-          placeholder="e.g. Cash-flow-positive European B2B SMBs, sub-€500k tickets, 3-year hold."
-          
-          className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-        />
-      </Field>
-
-      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
-        {savedAt && status === "idle" && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            saved {new Date(savedAt).toLocaleTimeString()}
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
-        >
-          {status === "saving" ? "Saving…" : "Save thesis"}
-        </button>
-      </div>
-    </form>
-  );
-
-  const naturalPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleNaturalSave();
-      }}
-      className="surface-paper space-y-4 p-5"
-    >
-      <Field label="Describe your investing thesis (or click the mic)">
-        <NaturalLanguageInput
-          value={naturalText}
-          onChange={setNaturalText}
-          placeholder="e.g. I want profitable European B2B SaaS and agencies in France and Benelux. Tickets €100k–500k, 3-year hold, low risk."
-          
-        />
-      </Field>
+  return (
+    <div className="space-y-4">
+      <NaturalLanguageInput
+        value={naturalText}
+        onChange={setNaturalText}
+        onSubmit={handleNaturalSave}
+        onToggleFilters={() => setFiltersOpen((v) => !v)}
+        filtersOpen={filtersOpen}
+        filterCount={filterCount}
+        placeholder="Describe your thesis — e.g. profitable French B2B SaaS, €100k–500k tickets, low risk"
+        status={status === "saving" ? "loading" : status === "parsing" ? "parsing" : "idle"}
+      />
 
       {parsedSummary && (
-        <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs leading-relaxed">
-          <span className="font-semibold uppercase tracking-[0.18em] text-brand">
+        <div className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          <span className="font-medium uppercase tracking-[0.16em] text-brand">
             AI applied
           </span>
           <span className="mx-2 text-border">·</span>
@@ -314,39 +208,122 @@ export function ThesisClient({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
-        {status === "parsing" && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
-            parsing…
-          </span>
-        )}
-        {savedAt && status === "idle" && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            saved {new Date(savedAt).toLocaleTimeString()}
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={submitting || !naturalText.trim()}
-          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
-        >
-          {status === "parsing"
-            ? "Parsing…"
-            : status === "saving"
-              ? "Saving…"
-              : "Save thesis"}
-        </button>
-      </div>
-    </form>
-  );
+      {filtersOpen && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="space-y-4">
+            <Field label={`Sectors (${sectors.length || "any"})`}>
+              <FilterChips
+                options={allSectors}
+                selected={sectors}
+                onChange={setSectors}
+                renderLabel={humanize}
+              />
+            </Field>
 
-  return (
-    <div className="space-y-4">
-      <FilterModeTabs manual={manualPanel} natural={naturalPanel} />
+            <Field label={`Countries (${countries.length || "any"})`}>
+              <FilterChips
+                options={allCountries}
+                selected={countries}
+                onChange={setCountries}
+              />
+            </Field>
+
+            <Field label={`Stages (${stages.length || "any"})`}>
+              <FilterChips
+                options={STAGES}
+                selected={stages}
+                onChange={(next) => setStages(next as Stage[])}
+                renderLabel={humanize}
+              />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Field label="Ticket min (€)">
+                <input
+                  type="number"
+                  value={ticketMin}
+                  onChange={(e) => setTicketMin(e.target.value)}
+                  min={0}
+                  step={10000}
+                  placeholder="any"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+              <Field label="Ticket max (€)">
+                <input
+                  type="number"
+                  value={ticketMax}
+                  onChange={(e) => setTicketMax(e.target.value)}
+                  min={0}
+                  step={10000}
+                  placeholder="any"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+              <Field label="Total capital (€)">
+                <input
+                  type="number"
+                  value={totalCapital}
+                  onChange={(e) => setTotalCapital(e.target.value)}
+                  min={0}
+                  step={50000}
+                  placeholder="optional"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+              <Field label="Risk tolerance">
+                <select
+                  value={risk}
+                  onChange={(e) => setRisk(e.target.value as Risk)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </Field>
+            </div>
+
+            <Field label="Free-form thesis">
+              <textarea
+                value={thesisText}
+                onChange={(e) => setThesisText(e.target.value)}
+                rows={3}
+                placeholder="e.g. Cash-flow-positive European B2B SMBs, sub-€500k tickets, 3-year hold."
+                className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed transition focus:border-foreground/30 focus:outline-none"
+              />
+            </Field>
+
+            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleManualSave}
+                disabled={status === "saving"}
+                className="rounded-md bg-foreground px-4 py-1.5 text-xs font-semibold text-background hover:opacity-90 disabled:opacity-50"
+              >
+                {status === "saving" ? "Saving…" : "Save thesis"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {savedAt && status === "idle" && (
+        <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+          Saved {new Date(savedAt).toLocaleTimeString()}
+        </p>
+      )}
+
       {error && (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -362,8 +339,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </label>
       {children}
@@ -375,10 +352,11 @@ function summariseParsed(p: PortfolioFilterParse): string {
   const bits: string[] = [];
   if (p.totalCapital != null)
     bits.push(`€${p.totalCapital.toLocaleString("en-GB")}`);
-  if (p.sectors?.length) bits.push(`sectors: ${p.sectors.join(", ")}`);
+  if (p.sectors?.length)
+    bits.push(`sectors: ${p.sectors.map(humanize).join(", ")}`);
   if (p.countries?.length) bits.push(`countries: ${p.countries.join(", ")}`);
   if (p.stagePreference && p.stagePreference !== "any")
-    bits.push(`stage: ${p.stagePreference}`);
+    bits.push(`stage: ${humanize(p.stagePreference)}`);
   if (p.riskTolerance) bits.push(`risk: ${p.riskTolerance}`);
   return bits.length ? bits.join(" • ") : "(no fields detected)";
 }

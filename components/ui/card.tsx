@@ -9,8 +9,7 @@ export function Card({
     <div
       className={cn(
         "surface p-5",
-        interactive &&
-          "transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift hover:border-brand/40",
+        interactive && "transition hover:border-foreground/30",
         className
       )}
       {...props}

@@ -24,11 +24,7 @@ export function EnrichmentBanner({
 
   if (status === "running") {
     return (
-      <div className="relative overflow-hidden rounded-xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent shimmer"
-        />
+      <div className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
         <span className="inline-flex items-center gap-2">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
@@ -103,11 +99,7 @@ export function EnrichmentBanner({
   }
 
   return (
-    <div className="surface-paper relative space-y-3 overflow-hidden p-4">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
-      />
+    <div className="space-y-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-1.5">

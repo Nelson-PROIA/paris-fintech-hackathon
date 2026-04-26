@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MatchedItemHydrated } from "@/lib/ai/match";
 import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
-import { fmtEur, flagFor, humanize } from "@/lib/format";
+import { fmtEur, humanize } from "@/lib/format";
 
 type Stage = {
   id: string;
@@ -42,7 +42,6 @@ export function MatchesClient({
     void run();
   }
 
-  // Auto-run on mount if no cache
   useEffect(() => {
     if (cachedMatches.length === 0) void run();
     return () => abortRef.current?.abort();
@@ -67,7 +66,6 @@ export function MatchesClient({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -111,7 +109,6 @@ export function MatchesClient({
     }
   }
 
-  // Show cached results until user regenerates
   if (showCache) {
     return (
       <>
@@ -127,34 +124,37 @@ export function MatchesClient({
 
   return (
     <>
-      <StreamProgress stages={stages} status={status} error={error} count={matches.length} />
+      <StreamProgress
+        stages={stages}
+        status={status}
+        error={error}
+        count={matches.length}
+      />
       {matches.length > 0 && (
         <div className="mb-3 mt-6 flex items-center justify-between text-xs">
           <p className="flex items-center gap-2 text-muted-foreground">
-            <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
+            <span className="font-semibold tabular-nums text-foreground">
               {matches.length}
             </span>
             {matches.length === 1 ? "match" : "matches"}
             {status === "streaming" && (
-              <span className="flex items-center gap-1.5 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-brand">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
                 </span>
                 streaming
               </span>
             )}
             {status === "done" && generatedAt && (
-              <span className="text-muted-foreground">
-                · {new Date(generatedAt).toLocaleTimeString("en-GB")}
-              </span>
+              <span>· {new Date(generatedAt).toLocaleTimeString("en-GB")}</span>
             )}
           </p>
           {status === "done" && (
             <button
               type="button"
               onClick={regenerate}
-              className="rounded-md border border-border bg-card/60 px-3 py-1 transition hover:border-brand/40 hover:bg-accent"
+              className="rounded-md border border-border bg-card px-3 py-1 transition hover:bg-accent"
             >
               Regenerate
             </button>
@@ -163,9 +163,11 @@ export function MatchesClient({
       )}
       <MatchList matches={matches} animate />
       {status === "done" && matches.length === 0 && (
-        <div className="surface-paper mt-8 flex flex-col items-center gap-3 p-10 text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">No results</span>
-          <p className="font-serif text-lg font-semibold">
+        <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-10 text-center">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            No results
+          </span>
+          <p className="text-base font-semibold">
             No matches passed the bar this run.
           </p>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -174,7 +176,7 @@ export function MatchesClient({
               href="/thesis"
               className="text-brand underline-offset-2 hover:underline"
             >
-              your thesis
+              your profile
             </Link>
             .
           </p>
@@ -194,27 +196,22 @@ function CacheHeader({
   onRegenerate: () => void;
 }) {
   return (
-    <div className="surface mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
       <p className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span className="flex h-2 w-2 rounded-full bg-success" />
-        <span>
-          <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
-            {count}
-          </span>{" "}
-          cached {count === 1 ? "match" : "matches"}
+        <span className="block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="font-semibold tabular-nums text-foreground">
+          {count}
         </span>
+        cached {count === 1 ? "match" : "matches"}
         {generatedAt && (
-          <span className="text-muted-foreground">
-            · {new Date(generatedAt).toLocaleString("en-GB")}
-          </span>
+          <span>· {new Date(generatedAt).toLocaleString("en-GB")}</span>
         )}
       </p>
       <button
         type="button"
         onClick={onRegenerate}
-        className="gradient-brand inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105"
+        className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90"
       >
-        <Spark />
         Regenerate live
       </button>
     </div>
@@ -234,70 +231,43 @@ function StreamProgress({
 }) {
   const isLive = status === "streaming";
   return (
-    <div className="surface-paper relative overflow-hidden p-6">
-      {/* live shimmering top hair line */}
-      <div
-        className={`absolute inset-x-0 top-0 h-px ${
-          isLive
-            ? "bg-gradient-to-r from-transparent via-brand to-transparent shimmer"
-            : "bg-border"
-        }`}
-      />
-      {/* faint scanning column when live */}
-      {isLive && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-transparent via-brand/40 to-transparent"
-          style={{ animation: "fade-in-up 1.6s ease-in-out infinite alternate" }}
-        />
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
-            isLive ? "gradient-conic animate-spin-slow" : "bg-muted"
-          }`}
-        >
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-card text-brand">
-            <Spark />
-          </span>
-        </span>
-        <h3 className="font-serif text-lg font-semibold tracking-tight">
+    <div className="rounded-xl border border-border bg-card p-5">
+      <div className="flex items-center gap-2">
+        <h3 className="text-base font-semibold tracking-[-0.01em]">
           AI matching
         </h3>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          Mistral Large · live
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Mistral Large
         </span>
         <Badge
           variant={isLive ? "brand" : status === "done" ? "success" : "default"}
-          className="ml-auto px-2.5 py-0.5"
+          className="ml-auto"
         >
           {isLive ? (
             <>
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
               </span>
               streaming
             </>
           ) : status === "done" ? (
-            <>✓ complete</>
+            "complete"
           ) : (
             "ready"
           )}
         </Badge>
       </div>
 
-      <ol className="relative mt-5 space-y-1">
-        {/* connector spine */}
+      <ol className="relative mt-4 space-y-1">
         <span
-          className="pointer-events-none absolute left-[9px] top-1 h-[calc(100%-1.25rem)] w-px bg-gradient-to-b from-border via-border to-transparent"
+          className="pointer-events-none absolute left-[7px] top-1 h-[calc(100%-1.25rem)] w-px bg-border"
           aria-hidden
         />
         {stages.map((s, i) => (
           <li
             key={s.id}
-            className="relative flex items-start gap-3 rounded-lg px-1 py-2 text-sm"
+            className="relative flex items-start gap-3 px-1 py-1.5 text-sm"
           >
             <StageDot state={s.state} />
             <div className="flex-1">
@@ -325,7 +295,7 @@ function StreamProgress({
               )}
             </div>
             {s.state === "done" && (
-              <span className="text-[10px] uppercase tracking-[0.2em] text-success">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 done
               </span>
             )}
@@ -333,9 +303,8 @@ function StreamProgress({
         ))}
       </ol>
 
-      {/* count chip while streaming */}
       {isLive && count > 0 && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs">
+        <div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
@@ -361,14 +330,14 @@ function StreamProgress({
 function StageDot({ state }: { state: Stage["state"] }) {
   if (state === "done")
     return (
-      <span className="relative z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success ring-2 ring-card">
+      <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 ring-2 ring-card dark:text-emerald-400">
         <svg
-          width="12"
-          height="12"
+          width="9"
+          height="9"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden
@@ -379,13 +348,13 @@ function StageDot({ state }: { state: Stage["state"] }) {
     );
   if (state === "running")
     return (
-      <span className="relative z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center ring-2 ring-card">
-        <span className="absolute h-5 w-5 animate-ping rounded-full bg-brand/40" />
-        <span className="relative h-2.5 w-2.5 rounded-full bg-brand shadow-[0_0_0_4px_var(--card)]" />
+      <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center ring-2 ring-card">
+        <span className="absolute h-4 w-4 animate-ping rounded-full bg-brand/40" />
+        <span className="relative h-2 w-2 rounded-full bg-brand" />
       </span>
     );
   return (
-    <span className="relative z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center ring-2 ring-card">
+    <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center ring-2 ring-card">
       <span className="h-2 w-2 rounded-full border border-border bg-card" />
     </span>
   );
@@ -405,7 +374,9 @@ function MatchList({
         <li
           key={m.campaignId}
           className={animate ? "animate-fade-in-up" : ""}
-          style={animate ? { animationDelay: `${Math.min(i, 8) * 60}ms` } : undefined}
+          style={
+            animate ? { animationDelay: `${Math.min(i, 8) * 60}ms` } : undefined
+          }
         >
           <MatchCard m={m} rank={i + 1} />
         </li>
@@ -419,20 +390,16 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
   return (
     <Link
       href={`/campaign/${m.campaignId}`}
-      className="surface group relative flex items-stretch gap-5 overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lift"
+      className="group flex items-stretch gap-5 rounded-xl border border-border bg-card p-5 transition hover:border-foreground/30"
     >
-      {/* Rank gutter */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 opacity-0 blur-3xl transition group-hover:opacity-100" />
-      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-brand/40 via-brand/10 to-transparent opacity-0 transition group-hover:opacity-100" />
-
-      <div className="flex flex-col items-center justify-center gap-2 border-r border-border/60 pr-5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+      <div className="flex w-16 shrink-0 flex-col items-center justify-center gap-1 border-r border-border pr-4">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           rank
         </span>
-        <span className="font-serif text-2xl font-semibold leading-none tabular-nums tracking-tight">
+        <span className="text-xl font-semibold leading-none tabular-nums tracking-[-0.02em]">
           {String(rank).padStart(2, "0")}
         </span>
-        <FitGauge score={m.fitScore} />
+        <FitChip score={m.fitScore} />
       </div>
 
       <div className="flex flex-1 flex-col gap-2">
@@ -440,7 +407,7 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
           <div className="flex min-w-0 items-center gap-3">
             <SectorIcon sector={co.sector} size="md" />
             <div className="min-w-0">
-              <div className="truncate text-base font-semibold leading-tight">
+              <div className="truncate text-base font-semibold leading-tight tracking-[-0.01em]">
                 {co.name}
               </div>
               <div className="truncate text-xs text-muted-foreground">
@@ -449,31 +416,22 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Seeking
             </div>
-            <div className="font-serif text-xl font-semibold tabular-nums tracking-tight gradient-headline">
+            <div className="text-lg font-semibold tabular-nums tracking-[-0.02em]">
               {fmtEur(m.campaign.capital_seeking_eur)}
             </div>
           </div>
         </div>
-        <p className="border-l-2 border-brand/30 pl-3 text-sm leading-relaxed text-foreground/90">
-          <span className="font-serif italic text-muted-foreground">
-            “
-          </span>
+        <p className="border-l-2 border-border pl-3 text-sm leading-relaxed text-foreground/90">
           {m.reasoning}
-          <span className="font-serif italic text-muted-foreground">
-            ”
-          </span>
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-          <Badge variant="ghost">
-            <span aria-hidden></span>
-            <span>{co.country ?? "—"}</span>
-          </Badge>
+          <Badge variant="outline">{co.country ?? "—"}</Badge>
           {co.sector && <Badge variant="brand">{humanize(co.sector)}</Badge>}
           {co.stage && <Badge>{humanize(co.stage)}</Badge>}
-          <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-brand opacity-0 transition group-hover:opacity-100">
+          <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-foreground opacity-0 transition group-hover:opacity-100">
             Open deal
             <ArrowSmall />
           </span>
@@ -483,40 +441,43 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
   );
 }
 
-function FitGauge({ score }: { score: number }) {
-  const tone =
+/**
+ * Compact fit "chip" instead of the previous oversized gauge ring.
+ * Hover reveals a tooltip explaining what the score actually means.
+ */
+function FitChip({ score }: { score: number }) {
+  const tier =
     score >= 80
-      ? "from-success to-success/50"
+      ? { label: "Strong", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" }
       : score >= 60
-        ? "from-brand to-chart-4/60"
-        : "from-warning to-warning/50";
-  return (
-    <div
-      className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${tone} shadow-soft`}
-    >
-      <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-card">
-        <span className="font-serif text-lg font-semibold leading-none tabular-nums">
-          {score}
-        </span>
-        <span className="mt-0.5 text-[8px] uppercase tracking-[0.22em] text-muted-foreground">
-          fit
-        </span>
-      </div>
-    </div>
-  );
-}
+        ? { label: "Good", tone: "bg-brand/15 text-brand border-brand/30" }
+        : score >= 40
+          ? { label: "Marginal", tone: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" }
+          : { label: "Low", tone: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30" };
 
-function Spark() {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
-    </svg>
+    <span className="group/fit relative">
+      <span
+        className={`inline-flex h-7 min-w-[2.5rem] items-center justify-center rounded-full border px-2 font-mono text-xs font-semibold tabular-nums ${tier.tone}`}
+      >
+        {score}
+      </span>
+      {/* Tooltip with grade explanation */}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-30 w-56 -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-left text-[11px] shadow-lg opacity-0 transition group-hover/fit:opacity-100"
+      >
+        <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Fit · {tier.label}
+        </span>
+        <span className="mt-1 block text-foreground">
+          0–100 score against your thesis: sector + country + stage + ticket fit + traction signals.
+        </span>
+        <span className="mt-1.5 block text-muted-foreground">
+          80+ strong · 60–80 good · 40–60 marginal · below low.
+        </span>
+      </span>
+    </span>
   );
 }
 

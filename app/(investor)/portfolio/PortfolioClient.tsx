@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { PortfolioView } from "@/components/PortfolioView";
 import { FilterChips } from "@/components/FilterChips";
-import { FilterModeTabs } from "@/components/FilterModeTabs";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
+import { humanize } from "@/lib/format";
 import type { PortfolioResult } from "@/lib/ai/portfolio-constructor";
 import type { PortfolioFilterParse } from "@/lib/ai/parse-query";
 
@@ -29,12 +29,20 @@ export function PortfolioClient({
   const [naturalText, setNaturalText] = useState("");
   const [parsedSummary, setParsedSummary] = useState<string | null>(null);
 
-  const [status, setStatus] = useState<"idle" | "parsing" | "loading" | "error">(
-    "idle"
-  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [status, setStatus] = useState<
+    "idle" | "parsing" | "loading" | "error"
+  >("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PortfolioResult | null>(null);
   const [elapsed, setElapsed] = useState<number | null>(null);
+
+  const filterCount =
+    sectors.length +
+    countries.length +
+    (stagePreference !== "any" ? 1 : 0) +
+    (riskTolerance !== "medium" ? 1 : 0) +
+    (thesisText ? 1 : 0);
 
   function applyParsed(p: PortfolioFilterParse) {
     if (p.totalCapital != null) setTotalCapital(p.totalCapital);
@@ -86,7 +94,8 @@ export function PortfolioClient({
     }
   }
 
-  async function handleManualSubmit() {
+  async function handleManualBuild() {
+    setFiltersOpen(false);
     await buildFromValues({
       totalCapital,
       sectors,
@@ -142,217 +151,147 @@ export function PortfolioClient({
     }
   }
 
-  const submitting = status === "loading" || status === "parsing";
-
-  const manualPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleManualSubmit();
-      }}
-      className="surface-paper space-y-5 p-5"
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Total capital (€)">
-          <input
-            type="number"
-            value={totalCapital}
-            onChange={(e) => setTotalCapital(Number(e.target.value))}
-            min={10_000}
-            step={10_000}
-            required
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-        <Field label="Stage preference">
-          <select
-            value={stagePreference}
-            onChange={(e) =>
-              setStagePreference(e.target.value as StagePref)
-            }
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          >
-            <option value="any">Any</option>
-            <option value="pre_revenue">Pre-revenue</option>
-            <option value="early">Early</option>
-            <option value="growth">Growth</option>
-          </select>
-        </Field>
-        <Field label="Risk tolerance">
-          <select
-            value={riskTolerance}
-            onChange={(e) => setRiskTolerance(e.target.value as RiskTol)}
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </Field>
-      </div>
-
-      <Field label={`Sectors (${sectors.length || "any"})`}>
-        <FilterChips
-          options={allSectors}
-          selected={sectors}
-          onChange={setSectors}
-        />
-      </Field>
-
-      <Field label={`Countries (${countries.length || "any"})`}>
-        <FilterChips
-          options={allCountries}
-          selected={countries}
-          onChange={setCountries}
-        />
-      </Field>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Field label="Max positions">
-          <input
-            type="number"
-            value={maxPositions}
-            onChange={(e) => setMaxPositions(Number(e.target.value))}
-            min={3}
-            max={25}
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-      </div>
-
-      <Field label="Thesis (optional)">
-        <textarea
-          value={thesisText}
-          onChange={(e) => setThesisText(e.target.value)}
-          placeholder="e.g. Cash-flow-positive European SMBs in B2B services and SaaS, sub-€500k tickets, 3-year hold."
-          
-          className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-        />
-      </Field>
-
-      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
-        {elapsed != null && status === "idle" && (
-          <span className="text-xs text-muted-foreground">
-            built in {(elapsed / 1000).toFixed(1)}s
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
-        >
-          {submitting ? (
-            <>
-              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
-              Building…
-            </>
-          ) : (
-            <>
-              <SparkSm />
-              Build portfolio
-            </>
-          )}
-        </button>
-      </div>
-    </form>
-  );
-
-  const naturalPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void handleNaturalSubmit();
-      }}
-      className="surface-paper space-y-4 p-5"
-    >
-      <Field label="Describe what you want, or click the mic to talk">
+  return (
+    <div className="space-y-6">
+      <div className="space-y-3">
         <NaturalLanguageInput
           value={naturalText}
           onChange={setNaturalText}
-          placeholder="e.g. €2 million across French B2B SaaS and agencies. Low risk, profitable companies, max 12 positions, 3-year hold."
-          
+          onSubmit={handleNaturalSubmit}
+          onToggleFilters={() => setFiltersOpen((v) => !v)}
+          filtersOpen={filtersOpen}
+          filterCount={filterCount}
+          placeholder="Describe your portfolio — e.g. €2M across French B2B SaaS, low risk, 12 positions"
+          status={status === "loading" ? "loading" : status === "parsing" ? "parsing" : "idle"}
         />
-      </Field>
 
-      {parsedSummary && (
-        <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs leading-relaxed">
-          <span className="font-semibold uppercase tracking-[0.18em] text-brand">
-            AI applied
-          </span>
-          <span className="mx-2 text-border">·</span>
-          <span>{parsedSummary}</span>
-        </div>
-      )}
+        {parsedSummary && (
+          <div className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            <span className="font-medium uppercase tracking-[0.16em] text-brand">
+              AI applied
+            </span>
+            <span className="mx-2 text-border">·</span>
+            <span>{parsedSummary}</span>
+          </div>
+        )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
-        <p className="text-xs text-muted-foreground">
-          The AI translates this into filters and runs the portfolio.
-        </p>
-        <div className="flex items-center gap-3">
-          {status === "parsing" && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
-              parsing…
-            </span>
-          )}
-          {elapsed != null && status === "idle" && (
-            <span className="text-xs text-muted-foreground">
-              built in {(elapsed / 1000).toFixed(1)}s
-            </span>
-          )}
-          <button
-            type="submit"
-            disabled={submitting || !naturalText.trim()}
-            className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
-          >
-            {status === "parsing" ? (
-              <>
-                <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
-                Parsing…
-              </>
-            ) : status === "loading" ? (
-              <>
-                <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
-                Building…
-              </>
-            ) : (
-              <>
-                <SparkSm />
-                Build portfolio
-              </>
-            )}
-          </button>
-        </div>
+        {filtersOpen && (
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Field label="Total capital (€)">
+                  <input
+                    type="number"
+                    value={totalCapital}
+                    onChange={(e) => setTotalCapital(Number(e.target.value))}
+                    min={10_000}
+                    step={10_000}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                  />
+                </Field>
+                <Field label="Stage preference">
+                  <select
+                    value={stagePreference}
+                    onChange={(e) =>
+                      setStagePreference(e.target.value as StagePref)
+                    }
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                  >
+                    <option value="any">Any</option>
+                    <option value="pre_revenue">Pre-revenue</option>
+                    <option value="early">Early</option>
+                    <option value="growth">Growth</option>
+                  </select>
+                </Field>
+                <Field label="Risk tolerance">
+                  <select
+                    value={riskTolerance}
+                    onChange={(e) =>
+                      setRiskTolerance(e.target.value as RiskTol)
+                    }
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </Field>
+              </div>
+
+              <Field label={`Sectors (${sectors.length || "any"})`}>
+                <FilterChips
+                  options={allSectors}
+                  selected={sectors}
+                  onChange={setSectors}
+                  renderLabel={humanize}
+                />
+              </Field>
+
+              <Field label={`Countries (${countries.length || "any"})`}>
+                <FilterChips
+                  options={allCountries}
+                  selected={countries}
+                  onChange={setCountries}
+                />
+              </Field>
+
+              <Field label="Max positions">
+                <input
+                  type="number"
+                  value={maxPositions}
+                  onChange={(e) => setMaxPositions(Number(e.target.value))}
+                  min={3}
+                  max={25}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+
+              <Field label="Thesis (optional)">
+                <textarea
+                  value={thesisText}
+                  onChange={(e) => setThesisText(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Cash-flow-positive European SMBs, sub-€500k tickets, 3-year hold."
+                  className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+
+              <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManualBuild}
+                  disabled={status === "loading"}
+                  className="rounded-md bg-foreground px-4 py-1.5 text-xs font-semibold text-background hover:opacity-90 disabled:opacity-50"
+                >
+                  {status === "loading" ? "Building…" : "Build portfolio"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {elapsed != null && status === "idle" && (
+          <p className="text-xs text-muted-foreground">
+            Built in {(elapsed / 1000).toFixed(1)}s
+          </p>
+        )}
       </div>
-    </form>
-  );
-
-  return (
-    <div className="space-y-8">
-      <FilterModeTabs manual={manualPanel} natural={naturalPanel} />
 
       {error && (
-        <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
 
       {result && <PortfolioView result={result} />}
     </div>
-  );
-}
-
-function SparkSm() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
-    </svg>
   );
 }
 
@@ -364,8 +303,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </label>
       {children}
@@ -376,11 +315,12 @@ function Field({
 function summariseParsed(p: PortfolioFilterParse): string {
   const bits: string[] = [];
   if (p.totalCapital != null)
-    bits.push(`€${(p.totalCapital).toLocaleString("en-GB")}`);
-  if (p.sectors?.length) bits.push(`sectors: ${p.sectors.join(", ")}`);
+    bits.push(`€${p.totalCapital.toLocaleString("en-GB")}`);
+  if (p.sectors?.length)
+    bits.push(`sectors: ${p.sectors.map(humanize).join(", ")}`);
   if (p.countries?.length) bits.push(`countries: ${p.countries.join(", ")}`);
   if (p.stagePreference && p.stagePreference !== "any")
-    bits.push(`stage: ${p.stagePreference}`);
+    bits.push(`stage: ${humanize(p.stagePreference)}`);
   if (p.riskTolerance) bits.push(`risk: ${p.riskTolerance}`);
   if (p.maxPositions != null) bits.push(`max ${p.maxPositions} positions`);
   return bits.length ? bits.join(" • ") : "(no fields detected)";

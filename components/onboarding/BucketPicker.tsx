@@ -22,19 +22,13 @@ export function BucketPicker({ options, value, onChange, disabled }: Props) {
             disabled={disabled}
             onClick={() => onChange(selected ? null : opt.value)}
             className={cn(
-              "group relative overflow-hidden rounded-lg border px-3.5 py-3 text-left text-sm font-medium transition-all duration-200",
+              "rounded-lg border px-3.5 py-3 text-left text-sm font-medium transition",
               selected
-                ? "border-brand/40 bg-brand-muted text-brand-foreground shadow-soft ring-1 ring-inset ring-white/30 dark:bg-brand-muted/60 dark:text-foreground"
-                : "border-border bg-card/60 text-foreground hover:-translate-y-0.5 hover:border-brand/30 hover:bg-accent hover:shadow-soft",
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-card text-foreground hover:bg-accent",
               disabled && "opacity-50"
             )}
           >
-            {selected && (
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent"
-              />
-            )}
             <span className="flex items-center gap-1.5">
               {selected && (
                 <svg
@@ -47,7 +41,6 @@ export function BucketPicker({ options, value, onChange, disabled }: Props) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden
-                  className="text-brand"
                 >
                   <path d="M20 6 9 17l-5-5" />
                 </svg>

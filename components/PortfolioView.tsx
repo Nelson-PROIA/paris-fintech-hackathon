@@ -11,7 +11,7 @@ import {
 import type { PortfolioResult } from "@/lib/ai/portfolio-constructor";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { Badge } from "@/components/ui/badge";
-import { fmtEur, flagFor } from "@/lib/format";
+import { fmtEur } from "@/lib/format";
 
 // Brand-aligned chart palette using oklch tokens for visual consistency.
 const SECTOR_COLORS = [
@@ -45,7 +45,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
   return (
     <section className="space-y-6">
       {/* Stats strip — banking-dashboard style */}
-      <div className="surface-paper grid grid-cols-2 divide-border md:grid-cols-4 md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-2 rounded-xl border border-border bg-card divide-border md:grid-cols-4 md:divide-x md:divide-y-0">
         <Stat
           label="Capital deployed"
           value={fmtEur(result.totalDeployed)}
@@ -76,10 +76,10 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         {/* Holdings table */}
-        <div className="surface overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
           <header className="flex items-center justify-between border-b border-border px-5 py-3.5">
             <div>
-              <h3 className="font-serif text-base font-semibold tracking-tight">
+              <h3 className="text-base font-semibold tracking-[-0.015em]">
                 Holdings
               </h3>
               <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -148,7 +148,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <span className="font-serif text-[15px] font-semibold tabular-nums tracking-tight">
+                        <span className="text-[15px] font-semibold tabular-nums tracking-[-0.01em]">
                           {fmtEur(p.allocationEur)}
                         </span>
                       </td>
@@ -178,7 +178,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                     Total deployed
                   </td>
                   <td className="px-3 py-2.5 text-right">
-                    <span className="font-serif text-base font-semibold tabular-nums tracking-tight">
+                    <span className="text-base font-semibold tabular-nums tracking-[-0.01em]">
                       {fmtEur(result.totalDeployed)}
                     </span>
                   </td>
@@ -195,10 +195,9 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
         </div>
 
         {/* Sector donut */}
-        <div className="surface-paper relative space-y-4 overflow-hidden p-5">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand/10 blur-3xl" />
-          <header className="relative">
-            <h3 className="font-serif text-base font-semibold tracking-tight">
+        <div className="space-y-4 rounded-xl border border-border bg-card p-5">
+          <header>
+            <h3 className="text-base font-semibold tracking-[-0.015em]">
               By sector
             </h3>
             <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -211,7 +210,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
               <span className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 Deployed
               </span>
-              <span className="font-serif text-2xl font-semibold tabular-nums tracking-tight">
+              <span className="text-2xl font-semibold tabular-nums tracking-[-0.02em]">
                 {fmtEur(totalDeployed)}
               </span>
             </div>
@@ -256,7 +255,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <ul className="relative space-y-2 text-xs">
+          <ul className="space-y-2 text-xs">
             {sectorData.map((s, i) => {
               const pct = (s.value / totalDeployed) * 100;
               return (
@@ -307,21 +306,15 @@ function Stat({
         : tone === "brand"
           ? "text-brand"
           : accent === "primary"
-            ? "gradient-headline"
+            ? "text-foreground"
             : "";
   return (
-    <div className="relative p-5">
-      {accent === "primary" && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -left-px top-3 h-8 w-1 rounded-r-full bg-gradient-to-b from-brand to-chart-4"
-        />
-      )}
-      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+    <div className="p-5">
+      <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
       <div
-        className={`mt-1.5 font-serif text-2xl font-semibold tabular-nums tracking-tight ${valueClass}`}
+        className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-[-0.02em] ${valueClass}`}
       >
         {value}
       </div>

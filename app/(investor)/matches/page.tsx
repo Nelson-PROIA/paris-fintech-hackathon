@@ -3,7 +3,6 @@ import { requireRole } from "@/lib/auth";
 import { getDb, getOrCreateInvestor } from "@/lib/db";
 import type { MatchedItemHydrated } from "@/lib/ai/match";
 import { MatchesClient } from "./MatchesClient";
-import { Badge } from "@/components/ui/badge";
 
 type MatchCacheRow = {
   investor_id: string;
@@ -34,14 +33,11 @@ export default async function MatchesPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-7">
-        <Badge variant="brand" className="mb-3 px-3 py-1">
-          <Spark />
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Curated for your thesis
-        </Badge>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          Top deals, ranked by{" "}
-          <span className="serif-italic gradient-headline">your thesis</span>
-          .
+        </p>
+        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-[-0.025em]">
+          Top deals, ranked by your thesis.
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           Mistral Large reads your thesis, filters live campaigns, and ranks
@@ -50,9 +46,11 @@ export default async function MatchesPage() {
       </header>
 
       {!hasThesis ? (
-        <div className="surface-paper flex flex-col items-center gap-3 p-12 text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Set thesis</span>
-          <h2 className="font-serif text-2xl font-semibold tracking-tight">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-12 text-center">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Set thesis
+          </span>
+          <h2 className="text-2xl font-semibold tracking-[-0.015em]">
             No thesis on file
           </h2>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -61,7 +59,7 @@ export default async function MatchesPage() {
           </p>
           <Link
             href="/thesis"
-            className="gradient-brand mt-2 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-lift ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
+            className="mt-2 inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
           >
             Set up your thesis
             <ArrowRight />
@@ -71,14 +69,6 @@ export default async function MatchesPage() {
         <MatchesClient cachedMatches={cachedMatches} cachedAt={cachedAt} />
       )}
     </main>
-  );
-}
-
-function Spark() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
-    </svg>
   );
 }
 
