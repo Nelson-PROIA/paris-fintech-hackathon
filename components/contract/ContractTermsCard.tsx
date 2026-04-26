@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { fmtEur } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import type { ContractView } from "./types";
@@ -46,13 +47,26 @@ export function ContractTermsCard({
             {STATUS_LABEL[contract.on_chain_state]}
           </Badge>
         </div>
-        <a
-          href={`#tx-${contract.deploy_tx_hash}`}
-          className="font-mono text-[11px] text-muted-foreground"
-          title={contract.deploy_tx_hash}
+        <Link
+          href={`/campaign/${contract.campaign_id}/contract`}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold transition hover:border-foreground/30"
         >
-          init: {shortHash(contract.deploy_tx_hash)}
-        </a>
+          View smart contract
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </Link>
       </header>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
@@ -81,9 +95,17 @@ export function ContractTermsCard({
       </dl>
 
       {marketplaceAddress && (
-        <p className="mt-4 text-[11px] text-muted-foreground">
-          Marketplace contract:{" "}
-          <span className="font-mono">{shortHash(marketplaceAddress, 6)}</span>
+        <p className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3 text-[11px] text-muted-foreground">
+          <span>
+            Marketplace contract:{" "}
+            <span className="font-mono">{shortHash(marketplaceAddress, 6)}</span>
+          </span>
+          <Link
+            href={`/campaign/${contract.campaign_id}/contract`}
+            className="text-brand underline-offset-2 hover:underline"
+          >
+            Open full contract explorer →
+          </Link>
         </p>
       )}
     </section>
