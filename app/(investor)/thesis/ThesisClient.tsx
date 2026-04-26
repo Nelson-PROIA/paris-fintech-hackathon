@@ -186,7 +186,7 @@ export function ThesisClient({
         e.preventDefault();
         void handleManualSave();
       }}
-      className="space-y-4 rounded-lg border border-border p-4"
+      className="surface-paper space-y-5 p-5"
     >
       <Field label={`Sectors (${sectors.length || "any"})`}>
         <FilterChips
@@ -221,7 +221,7 @@ export function ThesisClient({
             min={0}
             step={10000}
             placeholder="any"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           />
         </Field>
         <Field label="Ticket max (€)">
@@ -232,7 +232,7 @@ export function ThesisClient({
             min={0}
             step={10000}
             placeholder="any"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           />
         </Field>
         <Field label="Total capital (€)">
@@ -243,14 +243,14 @@ export function ThesisClient({
             min={0}
             step={50000}
             placeholder="optional"
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           />
         </Field>
         <Field label="Risk tolerance">
           <select
             value={risk}
             onChange={(e) => setRisk(e.target.value as Risk)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -265,20 +265,21 @@ export function ThesisClient({
           onChange={(e) => setThesisText(e.target.value)}
           placeholder="e.g. Cash-flow-positive European B2B SMBs, sub-€500k tickets, 3-year hold."
           rows={3}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
       </Field>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
         {savedAt && status === "idle" && (
-          <span className="text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
             saved {new Date(savedAt).toLocaleTimeString()}
           </span>
         )}
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
         >
           {status === "saving" ? "Saving…" : "Save thesis"}
         </button>
@@ -292,7 +293,7 @@ export function ThesisClient({
         e.preventDefault();
         void handleNaturalSave();
       }}
-      className="space-y-4 rounded-lg border border-border p-4"
+      className="surface-paper space-y-4 p-5"
     >
       <Field label="Describe your investing thesis (or click the mic)">
         <NaturalLanguageInput
@@ -304,27 +305,32 @@ export function ThesisClient({
       </Field>
 
       {parsedSummary && (
-        <div className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs">
-          <span className="font-medium text-muted-foreground">
-            AI applied:{" "}
+        <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs leading-relaxed">
+          <span className="font-semibold uppercase tracking-[0.18em] text-brand">
+            AI applied
           </span>
+          <span className="mx-2 text-border">·</span>
           <span>{parsedSummary}</span>
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
         {status === "parsing" && (
-          <span className="text-xs text-muted-foreground">parsing…</span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
+            parsing…
+          </span>
         )}
         {savedAt && status === "idle" && (
-          <span className="text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
             saved {new Date(savedAt).toLocaleTimeString()}
           </span>
         )}
         <button
           type="submit"
           disabled={submitting || !naturalText.trim()}
-          className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
         >
           {status === "parsing"
             ? "Parsing…"
@@ -340,7 +346,7 @@ export function ThesisClient({
     <div className="space-y-4">
       <FilterModeTabs manual={manualPanel} natural={naturalPanel} />
       {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+        <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -357,7 +363,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </label>
       {children}

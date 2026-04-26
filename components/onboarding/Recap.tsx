@@ -43,17 +43,23 @@ export function Recap({
   submitButtonLabel,
 }: Props) {
   return (
-    <section className="space-y-4 rounded-xl border border-foreground/20 bg-card p-5 shadow-sm">
+    <section className="surface-paper relative space-y-5 overflow-hidden p-6">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
+      />
       <header>
-        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           Summary
         </div>
-        <h2 className="text-lg font-semibold">
-          Almost there. Review and submit.
+        <h2 className="mt-1 font-serif text-2xl font-semibold tracking-tight">
+          Almost there.{" "}
+          <span className="serif-italic gradient-headline">Review</span> and
+          submit.
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything is editable after submission. Range fields are stored
-          as the median value for matching calculations.
+          Everything is editable after submission. Range fields are stored as
+          the median value for matching calculations.
         </p>
       </header>
 
@@ -63,14 +69,16 @@ export function Recap({
           return (
             <div
               key={step.id}
-              className="rounded-md border border-border bg-background p-3"
+              className="rounded-lg border border-border bg-card/70 p-3.5 transition hover:border-brand/30"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="text-sm font-semibold">{step.title}</h3>
+                <h3 className="font-serif text-sm font-semibold tracking-tight">
+                  {step.title}
+                </h3>
                 <button
                   type="button"
                   onClick={() => onEditStep(step.id)}
-                  className="text-xs text-muted-foreground hover:underline"
+                  className="rounded border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition hover:border-brand/30 hover:text-foreground"
                 >
                   edit
                 </button>
@@ -162,9 +170,10 @@ export function Recap({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
         {submitting && submitStage !== "idle" && (
-          <span className="text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
             {STAGE_LABEL[submitStage]}
           </span>
         )}
@@ -172,9 +181,29 @@ export function Recap({
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
         >
-          {submitting ? "In progress…" : (submitButtonLabel ?? "Submit")}
+          {submitting ? (
+            "In progress…"
+          ) : (
+            <>
+              {submitButtonLabel ?? "Submit"}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </>
+          )}
         </button>
       </div>
     </section>

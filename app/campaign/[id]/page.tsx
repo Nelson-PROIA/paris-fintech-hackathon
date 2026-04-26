@@ -11,7 +11,7 @@ import { DDSection } from "@/components/DDSection";
 import { RatingWidget } from "@/components/RatingWidget";
 import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
-import { fmtEur, fmtEurExact, flagFor } from "@/lib/format";
+import { fmtEur, fmtEurExact, flagFor, humanize } from "@/lib/format";
 import type { DDBrief } from "@/lib/ai/dd-analyst";
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
@@ -75,9 +75,10 @@ export default async function CampaignPage({
       </Link>
 
       {/* Hero */}
-      <section className="surface relative mt-5 overflow-hidden p-8">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-20" />
+      <section className="surface-paper relative mt-5 overflow-hidden p-8">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand/15 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-25" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-4">
@@ -85,11 +86,11 @@ export default async function CampaignPage({
               <div>
                 <Link
                   href={`/company/${co.id}`}
-                  className="text-sm text-muted-foreground underline-offset-2 hover:underline"
+                  className="text-xs uppercase tracking-[0.18em] text-muted-foreground underline-offset-2 hover:text-brand hover:underline"
                 >
                   {co.name}
                 </Link>
-                <h1 className="mt-1 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
+                <h1 className="mt-1 text-balance font-serif text-3xl font-semibold tracking-tight md:text-4xl">
                   {camp.title}
                 </h1>
               </div>
@@ -105,8 +106,8 @@ export default async function CampaignPage({
                 />
                 {camp.status}
               </Badge>
-              {co.sector && <Badge variant="brand">{co.sector}</Badge>}
-              {co.stage && <Badge>{co.stage}</Badge>}
+              {co.sector && <Badge variant="brand">{humanize(co.sector)}</Badge>}
+              {co.stage && <Badge>{humanize(co.stage)}</Badge>}
               <Badge variant="ghost">
                 {flagFor(co.country)} {co.country ?? "—"}
                 {co.city ? ` · ${co.city}` : ""}
@@ -120,10 +121,10 @@ export default async function CampaignPage({
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Capital seeking
             </div>
-            <div className="gradient-text text-4xl font-semibold tracking-tight tabular-nums md:text-5xl">
+            <div className="font-serif text-4xl font-semibold tracking-tight tabular-nums gradient-headline md:text-5xl">
               {fmtEur(camp.capital_seeking_eur)}
             </div>
             <div className="mt-1 text-xs text-muted-foreground tabular-nums">
@@ -161,11 +162,11 @@ export default async function CampaignPage({
       )}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <PanelSection title="Use of funds" icon="🎯">
+        <PanelSection title="Use of funds" icon="">
           {camp.use_of_funds}
         </PanelSection>
         {camp.pitch_summary && (
-          <PanelSection title="Pitch" icon="📣">
+          <PanelSection title="Pitch" icon="">
             {camp.pitch_summary}
           </PanelSection>
         )}
@@ -174,27 +175,27 @@ export default async function CampaignPage({
       {/* Collateral */}
       <section className="mt-8">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">
+          <h2 className="font-serif text-xl font-semibold tracking-tight">
             Collateral{" "}
-            <span className="text-sm text-muted-foreground">
-              ({collaterals.length})
+            <span className="font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              ({collaterals.length} on file)
             </span>
           </h2>
           {isOwner && (
             <Link
               href={`/campaign/${camp.id}/manage`}
-              className="text-xs text-brand underline-offset-2 hover:underline"
+              className="rounded-md border border-border bg-card/60 px-3 py-1 text-xs font-medium transition hover:border-brand/30 hover:bg-accent"
             >
               + Add collateral
             </Link>
           )}
         </div>
         {collaterals.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 rounded-lg border border-dashed border-border bg-card/40 p-4 text-sm text-muted-foreground">
             No collateral on file.
           </p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-2.5">
             {collaterals.map((c) => {
               const verdict = c.ai_verdict_json
                 ? (JSON.parse(c.ai_verdict_json) as {
@@ -207,12 +208,21 @@ export default async function CampaignPage({
               return (
                 <li
                   key={c.id}
-                  className="surface space-y-2 p-4 text-sm transition hover:border-brand/40"
+                  className="surface group relative space-y-2 overflow-hidden p-4 text-sm transition hover:border-brand/40 hover:shadow-lift"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium">{c.description}</span>
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-brand/40 via-brand/10 to-transparent opacity-0 transition group-hover:opacity-100" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 font-medium">
+                      <CollateralIcon type={c.type} />
+                      {c.description}
+                    </span>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {c.type} · {fmtEur(c.declared_value_eur)}
+                      <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em]">
+                        {c.type}
+                      </span>
+                      <span className="ml-2 font-serif text-base font-semibold tracking-tight text-foreground">
+                        {fmtEur(c.declared_value_eur)}
+                      </span>
                     </span>
                   </div>
                   {c.ai_score != null && (
@@ -227,14 +237,17 @@ export default async function CampaignPage({
                     </div>
                   )}
                   {verdict?.summary && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="border-l-2 border-brand/30 pl-3 text-xs leading-relaxed text-muted-foreground">
                       {verdict.summary}
                     </p>
                   )}
                   {verdict?.redFlags && verdict.redFlags.length > 0 && (
-                    <ul className="space-y-0.5 text-xs text-destructive">
+                    <ul className="space-y-1 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
                       {verdict.redFlags.map((f, i) => (
-                        <li key={i}>⚠ {f}</li>
+                        <li key={i} className="flex gap-1.5">
+                          <span aria-hidden>⚠</span>
+                          <span>{f}</span>
+                        </li>
                       ))}
                     </ul>
                   )}
@@ -285,11 +298,17 @@ export default async function CampaignPage({
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="surface p-4">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+    <div className="surface relative overflow-hidden p-4">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -left-px top-3 h-6 w-0.5 rounded-r-full bg-brand/40"
+      />
+      <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+      <div className="mt-1 font-serif text-lg font-semibold tabular-nums tracking-tight">
+        {value}
+      </div>
     </div>
   );
 }
@@ -304,12 +323,18 @@ function PanelSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="surface p-5">
-      <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+    <section className="surface relative overflow-hidden p-5">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent"
+      />
+      <h2 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
         <span aria-hidden>{icon}</span>
         {title}
       </h2>
-      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{children}</p>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+        {children}
+      </p>
     </section>
   );
 }
@@ -318,4 +343,27 @@ function ScorePill({ score }: { score: number }) {
   const variant: "success" | "warning" | "danger" =
     score >= 70 ? "success" : score >= 40 ? "warning" : "danger";
   return <Badge variant={variant}>AI score {score}</Badge>;
+}
+
+function CollateralIcon({ type }: { type: string }) {
+  const t = type.toLowerCase();
+  const emoji = t.includes("invoice")
+    ? "PDF"
+    : t.includes("inventory")
+      ? "📦"
+      : t.includes("equipment") || t.includes("machine")
+        ? "🛠️"
+        : t.includes("real") || t.includes("estate")
+          ? "🏢"
+          : t.includes("contract")
+            ? "📑"
+            : "💼";
+  return (
+    <span
+      className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-secondary to-muted text-sm shadow-soft"
+      aria-hidden
+    >
+      {emoji}
+    </span>
+  );
 }

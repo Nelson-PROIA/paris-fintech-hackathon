@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
   continuous: boolean;
@@ -100,13 +101,21 @@ export function NaturalLanguageInput({
 
   return (
     <div className="space-y-1">
-      <div className="relative">
+      <div className="group relative">
+        {/* Decorative gradient ring on focus */}
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-focus-within:opacity-100",
+            "bg-gradient-to-br from-brand/30 via-chart-4/20 to-warning/20 blur"
+          )}
+        />
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="relative w-full resize-y rounded-xl border border-border bg-card/80 px-4 py-3 pr-14 text-sm leading-relaxed shadow-soft transition placeholder:text-muted-foreground/70 focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
         {supported && (
           <button
@@ -114,13 +123,14 @@ export function NaturalLanguageInput({
             onClick={toggle}
             title={isListening ? "Stop listening" : "Speak"}
             aria-label={isListening ? "Stop listening" : "Speak"}
-            className={
+            className={cn(
+              "absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full transition-all",
               isListening
-                ? "absolute right-2 top-2 flex h-8 w-8 animate-pulse items-center justify-center rounded-full bg-rose-500 text-white"
-                : "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border border-border hover:bg-accent"
-            }
+                ? "bg-destructive text-white shadow-lift animate-glow-pulse"
+                : "border border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-brand"
+            )}
           >
-            {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+            {isListening ? <MicOff size={15} /> : <Mic size={15} />}
           </button>
         )}
       </div>

@@ -75,28 +75,49 @@ export function PresetChips(props: SingleProps | MultiProps) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <div className="flex flex-wrap gap-2">
-        {props.options.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            disabled={props.disabled}
-            onClick={() => pick(opt.value)}
-            className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition",
-              isSelected(opt.value)
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background hover:bg-accent",
-              props.disabled && "opacity-50"
-            )}
-          >
-            {opt.label}
-            {opt.hint && (
-              <span className="ml-1 text-xs opacity-70">· {opt.hint}</span>
-            )}
-          </button>
-        ))}
+        {props.options.map((opt) => {
+          const selected = isSelected(opt.value);
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              disabled={props.disabled}
+              onClick={() => pick(opt.value)}
+              className={cn(
+                "group inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-200",
+                selected
+                  ? "border-brand/40 bg-brand-muted text-brand-foreground shadow-soft ring-1 ring-inset ring-white/30 dark:bg-brand-muted/60 dark:text-foreground"
+                  : "border-border bg-card/60 text-foreground hover:border-brand/30 hover:bg-accent",
+                props.disabled && "opacity-50"
+              )}
+            >
+              {selected && (
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  className="text-brand"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              )}
+              {opt.label}
+              {opt.hint && (
+                <span className="text-[11px] text-muted-foreground">
+                  · {opt.hint}
+                </span>
+              )}
+            </button>
+          );
+        })}
         {props.allowOther && (
           <button
             type="button"
@@ -116,13 +137,14 @@ export function PresetChips(props: SingleProps | MultiProps) {
               }
             }}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition",
+              "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all",
               isOtherActive
-                ? "border-foreground bg-foreground text-background"
-                : "border-dashed border-border bg-background hover:bg-accent"
+                ? "border-brand/40 bg-brand-muted text-brand-foreground"
+                : "border-dashed border-border bg-card/40 text-muted-foreground hover:border-brand/30 hover:bg-accent hover:text-foreground"
             )}
           >
-            Autre…
+            <span className="text-base leading-none">+</span>
+            Other…
           </button>
         )}
       </div>
@@ -133,7 +155,7 @@ export function PresetChips(props: SingleProps | MultiProps) {
           onChange={(e) => setOther(e.target.value)}
           disabled={props.disabled}
           placeholder="Specify…"
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
       )}
     </div>

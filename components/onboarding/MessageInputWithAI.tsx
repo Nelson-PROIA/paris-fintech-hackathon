@@ -80,35 +80,50 @@ export function MessageInputWithAI({
         rows={rows}
         placeholder={placeholder}
         disabled={disabled || status === "loading"}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
+        className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2.5 text-sm leading-relaxed shadow-soft transition placeholder:text-muted-foreground/70 focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30 disabled:opacity-60"
       />
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          {value.length} characters · plain text is fine
+          <span className="tabular-nums">{value.length}</span> characters · plain
+          text is fine
         </p>
         <button
           type="button"
           onClick={enrich}
           disabled={!value.trim() || disabled || status === "loading"}
-          className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card/60 px-3 py-1.5 text-xs font-medium transition hover:border-brand/30 hover:bg-accent disabled:opacity-50"
         >
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden
+            className="text-brand"
+          >
+            <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
+          </svg>
           {status === "loading" ? "Enriching…" : "Enrich with AI"}
         </button>
       </div>
 
       {error && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
           {error}
         </div>
       )}
 
       {proposal && (
-        <div className="space-y-3 rounded-md border border-border bg-secondary/40 p-3">
+        <div className="surface-paper relative space-y-3 overflow-hidden p-3.5">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
+          />
           <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand">
               AI proposal
             </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm">
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
               {proposal.enriched}
             </p>
           </div>
@@ -132,7 +147,7 @@ export function MessageInputWithAI({
             <button
               type="button"
               onClick={accept}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+              className="gradient-brand inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105"
             >
               Accept and replace
             </button>
@@ -142,14 +157,14 @@ export function MessageInputWithAI({
                 onChange(value + "\n\n" + proposal.enriched);
                 setProposal(null);
               }}
-              className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
+              className="rounded-md border border-border bg-card/60 px-3 py-1.5 text-xs font-medium transition hover:border-brand/30 hover:bg-accent"
             >
               Append to text
             </button>
             <button
               type="button"
               onClick={reject}
-              className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
+              className="rounded-md border border-border bg-card/60 px-3 py-1.5 text-xs font-medium transition hover:border-border hover:bg-accent"
             >
               Keep original
             </button>

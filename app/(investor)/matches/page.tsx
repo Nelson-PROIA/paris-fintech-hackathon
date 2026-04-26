@@ -33,32 +33,35 @@ export default async function MatchesPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <header className="mb-6">
-        <Badge variant="brand" className="mb-3">
+      <header className="mb-7">
+        <Badge variant="brand" className="mb-3 px-3 py-1">
           <Spark />
           Curated for your thesis
         </Badge>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight">
+        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
           Top deals, ranked by{" "}
-          <span className="gradient-text">your thesis</span>.
+          <span className="serif-italic gradient-headline">your thesis</span>
+          .
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 max-w-2xl text-muted-foreground">
           Mistral Large reads your thesis, filters live campaigns, and ranks
           the best fits with one-line reasoning per pick.
         </p>
       </header>
 
       {!hasThesis ? (
-        <div className="surface flex flex-col items-center gap-3 p-10 text-center">
-          <span className="text-3xl">🎯</span>
-          <h2 className="text-lg font-semibold">No thesis on file</h2>
+        <div className="surface-paper flex flex-col items-center gap-3 p-12 text-center">
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Set thesis</span>
+          <h2 className="font-serif text-2xl font-semibold tracking-tight">
+            No thesis on file
+          </h2>
           <p className="max-w-sm text-sm text-muted-foreground">
             Tell us what you&apos;re looking for and we&apos;ll match you with
             deals — sectors, countries, ticket size, in your own words.
           </p>
           <Link
             href="/thesis"
-            className="gradient-brand mt-2 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 hover:brightness-105"
+            className="gradient-brand mt-2 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-lift ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
           >
             Set up your thesis
             <ArrowRight />

@@ -24,10 +24,20 @@ export function EnrichmentBanner({
 
   if (status === "running") {
     return (
-      <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-sm">
-        <span className="font-medium">Background research…</span>{" "}
-        <span className="text-muted-foreground">
-          Querying SIRENE and the web to pre-fill some fields.
+      <div className="relative overflow-hidden rounded-xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/60 to-transparent shimmer"
+        />
+        <span className="inline-flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+          </span>
+          <span className="font-medium">Background research…</span>
+          <span className="text-muted-foreground">
+            Querying SIRENE and the web to pre-fill some fields.
+          </span>
         </span>
       </div>
     );
@@ -35,7 +45,7 @@ export function EnrichmentBanner({
 
   if (status === "error") {
     return (
-      <div className="rounded-md border border-destructive/40 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+      <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-xs text-destructive">
         Background research unavailable. You can continue without it; we&apos;ll
         retry later.
       </div>
@@ -53,7 +63,7 @@ export function EnrichmentBanner({
 
   if (!hasContent) {
     return (
-      <div className="rounded-md border border-border bg-secondary/40 px-4 py-3 text-sm">
+      <div className="rounded-xl border border-border bg-card/60 px-4 py-3 text-sm">
         <span className="font-medium">Research complete.</span>{" "}
         <span className="text-muted-foreground">
           No useful public info found on this company.
@@ -93,11 +103,18 @@ export function EnrichmentBanner({
   }
 
   return (
-    <div className="space-y-3 rounded-md border border-border bg-secondary/40 p-4">
+    <div className="surface-paper relative space-y-3 overflow-hidden p-4">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent"
+      />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Enriched profile
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Enriched profile
+            </div>
           </div>
           <p className="mt-0.5 text-sm">
             We found{" "}

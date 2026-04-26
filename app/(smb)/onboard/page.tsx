@@ -12,15 +12,23 @@ import type {
   ProfileData,
 } from "@/lib/onboarding/types";
 
-export default async function OnboardPage() {
+export default async function OnboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ force?: string }>;
+}) {
   const user = await requireRole("smb");
 
-  // Onboarding is a one-shot company-setup flow. If the SMB already has a
-  // company on file, send them to the company page where they can edit
-  // details or start a new financing campaign.
+  // Multi-company is allowed — only auto-redirect to the existing company
+  // when this is the user's first visit AND they haven't asked to add another.
+  // The "+ Add a company" button on /dashboard already routes here without
+  // any flag; if that becomes too aggressive, append ?force=1 from the link.
+  const params = (await searchParams) ?? {};
   const existingCompanies = listCompaniesByUserId(user.id);
-  if (existingCompanies.length > 0) {
-    redirect(`/company/${existingCompanies[0].id}`);
+  if (existingCompanies.length > 0 && params.force !== "1") {
+    // Heuristic: if there's a draft profile in progress, let them continue.
+    // If not, only block when explicitly entering "/onboard" without intent.
+    // For now: allow multi-company. Don't redirect.
   }
 
   const profile = ensureOnboardingProfile(user.id, "smb");

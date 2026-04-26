@@ -39,87 +39,93 @@
   --radius-xl: calc(var(--radius) + 6px);
   --radius-2xl: calc(var(--radius) + 12px);
   --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-sans);
 
   --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.04);
   --shadow-lift: 0 1px 3px rgb(15 23 42 / 0.06), 0 12px 32px rgb(15 23 42 / 0.08);
+  --shadow-paper:
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 8px 24px -10px rgb(15 23 42 / 0.10);
   --shadow-glow: 0 0 0 1px rgb(45 212 191 / 0.16), 0 12px 40px -12px rgb(13 148 136 / 0.45);
 }
 
 :root {
-  /* Light mode — fintech premium: deep ink + electric teal + warm amber */
-  --background: oklch(0.99 0.003 240);
-  --foreground: oklch(0.18 0.04 260);
+  /* Light — dense ink + brand teal accent. Solid surfaces, almost no gradients. */
+  --background: oklch(0.985 0.002 240);
+  --foreground: oklch(0.16 0.025 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.04 260);
+  --card-foreground: oklch(0.16 0.025 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.04 260);
+  --popover-foreground: oklch(0.16 0.025 260);
 
-  --primary: oklch(0.22 0.05 260);
-  --primary-foreground: oklch(0.99 0.003 240);
+  --primary: oklch(0.18 0.025 260);
+  --primary-foreground: oklch(0.99 0.002 240);
 
-  --secondary: oklch(0.96 0.012 240);
-  --secondary-foreground: oklch(0.22 0.05 260);
-  --muted: oklch(0.96 0.012 240);
-  --muted-foreground: oklch(0.5 0.025 260);
+  --secondary: oklch(0.965 0.008 240);
+  --secondary-foreground: oklch(0.18 0.025 260);
+  --muted: oklch(0.965 0.008 240);
+  --muted-foreground: oklch(0.48 0.018 250);
   --accent: oklch(0.96 0.012 240);
-  --accent-foreground: oklch(0.22 0.05 260);
+  --accent-foreground: oklch(0.2 0.03 260);
 
-  --brand: oklch(0.7 0.15 190);
-  --brand-foreground: oklch(0.16 0.04 260);
-  --brand-muted: oklch(0.93 0.045 190);
-  --glow: oklch(0.78 0.18 185);
+  --brand: oklch(0.62 0.16 200);
+  --brand-foreground: oklch(0.99 0.002 240);
+  --brand-muted: oklch(0.95 0.04 200);
+  --glow: oklch(0.72 0.18 195);
 
-  --success: oklch(0.68 0.16 155);
-  --warning: oklch(0.78 0.16 75);
+  --success: oklch(0.66 0.15 155);
+  --warning: oklch(0.74 0.16 75);
   --destructive: oklch(0.6 0.22 25);
 
-  --border: oklch(0.91 0.01 240);
-  --input: oklch(0.91 0.01 240);
-  --ring: oklch(0.7 0.15 190);
+  --border: oklch(0.92 0.008 240);
+  --input: oklch(0.92 0.008 240);
+  --ring: oklch(0.62 0.16 200);
 
-  --chart-1: oklch(0.7 0.15 190);
-  --chart-2: oklch(0.68 0.16 155);
-  --chart-3: oklch(0.78 0.16 75);
-  --chart-4: oklch(0.62 0.18 290);
+  --chart-1: oklch(0.62 0.16 200);
+  --chart-2: oklch(0.66 0.15 155);
+  --chart-3: oklch(0.74 0.16 75);
+  --chart-4: oklch(0.6 0.18 290);
   --chart-5: oklch(0.65 0.2 25);
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 }
 
 .dark {
-  --background: oklch(0.13 0.02 260);
+  --background: oklch(0.13 0.018 260);
   --foreground: oklch(0.97 0.005 240);
-  --card: oklch(0.17 0.025 260);
+  --card: oklch(0.16 0.022 260);
   --card-foreground: oklch(0.97 0.005 240);
-  --popover: oklch(0.17 0.025 260);
+  --popover: oklch(0.16 0.022 260);
   --popover-foreground: oklch(0.97 0.005 240);
 
   --primary: oklch(0.97 0.005 240);
-  --primary-foreground: oklch(0.16 0.03 260);
+  --primary-foreground: oklch(0.16 0.022 260);
 
-  --secondary: oklch(0.23 0.03 260);
+  --secondary: oklch(0.22 0.025 260);
   --secondary-foreground: oklch(0.97 0.005 240);
-  --muted: oklch(0.23 0.03 260);
-  --muted-foreground: oklch(0.68 0.02 240);
-  --accent: oklch(0.23 0.03 260);
+  --muted: oklch(0.22 0.025 260);
+  --muted-foreground: oklch(0.66 0.018 240);
+  --accent: oklch(0.22 0.025 260);
   --accent-foreground: oklch(0.97 0.005 240);
 
-  --brand: oklch(0.78 0.16 185);
-  --brand-foreground: oklch(0.13 0.02 260);
-  --brand-muted: oklch(0.3 0.08 190);
-  --glow: oklch(0.85 0.2 180);
+  --brand: oklch(0.72 0.17 195);
+  --brand-foreground: oklch(0.13 0.018 260);
+  --brand-muted: oklch(0.28 0.07 200);
+  --glow: oklch(0.8 0.2 190);
 
-  --success: oklch(0.74 0.16 155);
-  --warning: oklch(0.82 0.17 75);
+  --success: oklch(0.72 0.16 155);
+  --warning: oklch(0.8 0.17 75);
   --destructive: oklch(0.7 0.2 25);
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.78 0.16 185);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.72 0.17 195);
 
-  --chart-1: oklch(0.78 0.16 185);
-  --chart-2: oklch(0.74 0.16 155);
-  --chart-3: oklch(0.82 0.17 75);
+  --chart-1: oklch(0.72 0.17 195);
+  --chart-2: oklch(0.72 0.16 155);
+  --chart-3: oklch(0.8 0.17 75);
   --chart-4: oklch(0.7 0.2 290);
   --chart-5: oklch(0.72 0.22 25);
 }
@@ -128,19 +134,22 @@
   * {
     @apply border-border outline-ring/40;
   }
-  body {
-    @apply bg-background text-foreground antialiased;
-    background-image:
-      radial-gradient(1100px 600px at 90% -10%, color-mix(in oklch, var(--brand) 14%, transparent), transparent 60%),
-      radial-gradient(900px 500px at -10% 5%, color-mix(in oklch, var(--chart-4) 10%, transparent), transparent 60%);
-    background-attachment: fixed;
-  }
   html {
     @apply font-sans;
+    background-color: var(--background);
+    font-feature-settings: "ss01", "cv11", "tnum" 1;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background-color: transparent;
   }
   h1, h2, h3, h4 {
     letter-spacing: -0.02em;
   }
+  h1 { font-weight: 600; }
+  h2, h3 { font-weight: 600; }
+  /* Tabular numerals on anything that displays money or counts */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
 @layer utilities {
@@ -151,7 +160,7 @@
   }
 
   .glass-strong {
-    background-color: color-mix(in oklch, var(--card) 88%, transparent);
+    background-color: color-mix(in oklch, var(--card) 92%, transparent);
     backdrop-filter: saturate(160%) blur(20px);
     -webkit-backdrop-filter: saturate(160%) blur(20px);
   }
@@ -170,81 +179,84 @@
     box-shadow: var(--shadow-lift);
   }
 
+  /* Compatibility shim — surface-paper kept in sync with surface so existing
+     usages don't break, but the heavy faux-paper styling is gone. */
+  .surface-paper {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* Solid fills replace the previous gradient backgrounds on primary CTAs.
+     Keeps a subtle brand sheen without going carnival. */
   .gradient-brand {
-    background-image: linear-gradient(135deg,
-      color-mix(in oklch, var(--brand) 100%, white 0%) 0%,
-      color-mix(in oklch, var(--chart-4) 90%, var(--brand) 10%) 100%);
+    background-color: var(--brand);
+    color: var(--brand-foreground);
   }
 
-  .gradient-text {
-    background-image: linear-gradient(135deg, var(--foreground), color-mix(in oklch, var(--brand) 100%, var(--foreground) 0%));
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
+  /* Compat shims — all prior gradient utilities now resolve to neutral. */
+  .gradient-text { color: var(--foreground); }
+  .gradient-headline { color: var(--foreground); }
+  .gradient-mesh { background: transparent; }
+  .gradient-aurora { background: transparent; }
+  .gradient-conic { background: transparent; }
+  .ring-glow { box-shadow: 0 0 0 1px color-mix(in oklch, var(--brand) 30%, transparent); }
+
+  .strip-divider > * + * {
+    border-left: 1px solid var(--border);
   }
 
-  .gradient-mesh {
-    background-image:
-      radial-gradient(at 20% 0%, color-mix(in oklch, var(--brand) 30%, transparent), transparent 50%),
-      radial-gradient(at 80% 100%, color-mix(in oklch, var(--chart-4) 25%, transparent), transparent 55%),
-      radial-gradient(at 0% 100%, color-mix(in oklch, var(--warning) 18%, transparent), transparent 55%);
+  .rule-etched {
+    height: 1px;
+    background: var(--border);
   }
 
-  .ring-glow {
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--brand) 30%, transparent),
-      0 0 40px -10px color-mix(in oklch, var(--brand) 50%, transparent);
+  /* Serif aliases now resolve to the system sans — we're going modern-only. */
+  .font-serif { font-family: var(--font-sans); }
+  .serif-italic {
+    font-family: var(--font-sans);
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--brand);
   }
 
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 
-  /* Animations */
   @keyframes fade-in-up {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes pulse-soft {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.55; }
   }
-
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
-
   @keyframes glow-pulse {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--brand) 40%, transparent); }
-    50% { box-shadow: 0 0 0 8px color-mix(in oklch, var(--brand) 0%, transparent); }
+    50% { box-shadow: 0 0 0 6px color-mix(in oklch, var(--brand) 0%, transparent); }
   }
-
   @keyframes float-slow {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
+    50% { transform: translateY(-4px); }
   }
 
-  .animate-fade-in-up {
-    animation: fade-in-up 420ms cubic-bezier(0.21, 1, 0.21, 1) both;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 1.6s ease-in-out infinite;
-  }
-
-  .animate-glow-pulse {
-    animation: glow-pulse 1.6s ease-out infinite;
-  }
-
-  .animate-float-slow {
-    animation: float-slow 6s ease-in-out infinite;
-  }
+  .animate-fade-in-up { animation: fade-in-up 380ms cubic-bezier(0.21, 1, 0.21, 1) both; }
+  .animate-pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
+  .animate-glow-pulse { animation: glow-pulse 1.6s ease-out infinite; }
+  .animate-float-slow { animation: float-slow 6s ease-in-out infinite; }
+  /* Compat shims for animations the agent added */
+  .animate-spin-slow { animation: none; }
+  .animate-ticker { animation: none; }
 
   .shimmer {
     background-image: linear-gradient(90deg,
       transparent 0%,
-      color-mix(in oklch, var(--foreground) 6%, transparent) 50%,
+      color-mix(in oklch, var(--foreground) 5%, transparent) 50%,
       transparent 100%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;

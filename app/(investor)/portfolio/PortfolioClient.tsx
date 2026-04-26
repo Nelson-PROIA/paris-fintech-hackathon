@@ -150,7 +150,7 @@ export function PortfolioClient({
         e.preventDefault();
         void handleManualSubmit();
       }}
-      className="space-y-4 rounded-lg border border-border p-4"
+      className="surface-paper space-y-5 p-5"
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Total capital (€)">
@@ -161,7 +161,7 @@ export function PortfolioClient({
             min={10_000}
             step={10_000}
             required
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           />
         </Field>
         <Field label="Stage preference">
@@ -170,7 +170,7 @@ export function PortfolioClient({
             onChange={(e) =>
               setStagePreference(e.target.value as StagePref)
             }
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           >
             <option value="any">Any</option>
             <option value="pre_revenue">Pre-revenue</option>
@@ -182,7 +182,7 @@ export function PortfolioClient({
           <select
             value={riskTolerance}
             onChange={(e) => setRiskTolerance(e.target.value as RiskTol)}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -215,7 +215,7 @@ export function PortfolioClient({
             onChange={(e) => setMaxPositions(Number(e.target.value))}
             min={3}
             max={25}
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
           />
         </Field>
       </div>
@@ -226,11 +226,11 @@ export function PortfolioClient({
           onChange={(e) => setThesisText(e.target.value)}
           placeholder="e.g. Cash-flow-positive European SMBs in B2B services and SaaS, sub-€500k tickets, 3-year hold."
           rows={3}
-          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
       </Field>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
         {elapsed != null && status === "idle" && (
           <span className="text-xs text-muted-foreground">
             built in {(elapsed / 1000).toFixed(1)}s
@@ -239,9 +239,19 @@ export function PortfolioClient({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
         >
-          {submitting ? "Building…" : "Build portfolio"}
+          {submitting ? (
+            <>
+              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
+              Building…
+            </>
+          ) : (
+            <>
+              <SparkSm />
+              Build portfolio
+            </>
+          )}
         </button>
       </div>
     </form>
@@ -253,7 +263,7 @@ export function PortfolioClient({
         e.preventDefault();
         void handleNaturalSubmit();
       }}
-      className="space-y-4 rounded-lg border border-border p-4"
+      className="surface-paper space-y-4 p-5"
     >
       <Field label="Describe what you want, or click the mic to talk">
         <NaturalLanguageInput
@@ -265,21 +275,23 @@ export function PortfolioClient({
       </Field>
 
       {parsedSummary && (
-        <div className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs">
-          <span className="font-medium text-muted-foreground">
-            AI applied:{" "}
+        <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs leading-relaxed">
+          <span className="font-semibold uppercase tracking-[0.18em] text-brand">
+            AI applied
           </span>
+          <span className="mx-2 text-border">·</span>
           <span>{parsedSummary}</span>
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
         <p className="text-xs text-muted-foreground">
-          The AI translates this into the filters and runs the portfolio.
+          The AI translates this into filters and runs the portfolio.
         </p>
         <div className="flex items-center gap-3">
           {status === "parsing" && (
-            <span className="text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
               parsing…
             </span>
           )}
@@ -291,13 +303,24 @@ export function PortfolioClient({
           <button
             type="submit"
             disabled={submitting || !naturalText.trim()}
-            className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
           >
-            {status === "parsing"
-              ? "Parsing…"
-              : status === "loading"
-                ? "Building…"
-                : "Build portfolio"}
+            {status === "parsing" ? (
+              <>
+                <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
+                Parsing…
+              </>
+            ) : status === "loading" ? (
+              <>
+                <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand-foreground" />
+                Building…
+              </>
+            ) : (
+              <>
+                <SparkSm />
+                Build portfolio
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -309,13 +332,27 @@ export function PortfolioClient({
       <FilterModeTabs manual={manualPanel} natural={naturalPanel} />
 
       {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+        <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
 
       {result && <PortfolioView result={result} />}
     </div>
+  );
+}
+
+function SparkSm() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M12 2 9 9l-7 3 7 3 3 7 3-7 7-3-7-3z" />
+    </svg>
   );
 }
 
@@ -328,7 +365,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
         {label}
       </label>
       {children}

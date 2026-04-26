@@ -1,54 +1,51 @@
 import { cn } from "@/lib/utils";
+import { humanize } from "@/lib/format";
 
-type SectorMeta = {
-  emoji: string;
-  hue: number;
+/**
+ * No emojis. Each sector gets a stable hue (tinted brand-aligned background)
+ * + a 2-letter monogram derived from the humanised label. Modern, clean,
+ * sortable, and light/dark-mode safe.
+ */
+
+const HUE_MAP: Record<string, number> = {
+  saas_micro: 200,
+  b2b_services: 220,
+  agency: 320,
+  professional_services: 240,
+  manufacturing: 30,
+  retail: 340,
+  ecommerce: 290,
+  makers: 60,
+  data: 250,
+  hospitality: 25,
+  energy: 75,
+  cleantech: 145,
+  health: 170,
+  fintech: 245,
+  education: 270,
+  logistics: 220,
+  mobility: 200,
 };
 
-const FALLBACK: SectorMeta = { emoji: "🏢", hue: 220 };
+function hueFor(sector: string | null | undefined): number {
+  if (!sector) return 220;
+  const k = sector.toLowerCase().trim().replace(/[\s-]+/g, "_");
+  if (HUE_MAP[k] != null) return HUE_MAP[k];
+  // Stable hash so unknown sectors get a consistent colour
+  let h = 0;
+  for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
 
-const SECTOR_MAP: Record<string, SectorMeta> = {
-  saas: { emoji: "⚡", hue: 190 },
-  "b2b saas": { emoji: "⚡", hue: 190 },
-  software: { emoji: "💻", hue: 210 },
-  manufacturing: { emoji: "🛠️", hue: 30 },
-  retail: { emoji: "🏬", hue: 340 },
-  "e-commerce": { emoji: "🛍️", hue: 310 },
-  ecommerce: { emoji: "🛍️", hue: 310 },
-  food: { emoji: "🍽️", hue: 25 },
-  beverage: { emoji: "☕", hue: 35 },
-  agriculture: { emoji: "🌾", hue: 90 },
-  agritech: { emoji: "🌾", hue: 95 },
-  fashion: { emoji: "👗", hue: 320 },
-  textile: { emoji: "🧵", hue: 280 },
-  hospitality: { emoji: "🏨", hue: 25 },
-  logistics: { emoji: "🚚", hue: 220 },
-  mobility: { emoji: "🚲", hue: 200 },
-  energy: { emoji: "⚡", hue: 75 },
-  cleantech: { emoji: "🌱", hue: 145 },
-  health: { emoji: "🩺", hue: 170 },
-  fintech: { emoji: "💳", hue: 245 },
-  education: { emoji: "🎓", hue: 270 },
-  media: { emoji: "🎬", hue: 0 },
-  agency: { emoji: "✏️", hue: 320 },
-  services: { emoji: "🤝", hue: 220 },
-  consulting: { emoji: "📊", hue: 240 },
-  craft: { emoji: "🎨", hue: 30 },
-  makers: { emoji: "🔧", hue: 40 },
-  pottery: { emoji: "🏺", hue: 25 },
-  winery: { emoji: "🍷", hue: 350 },
-  leather: { emoji: "👜", hue: 30 },
-  data: { emoji: "📊", hue: 250 },
-};
-
-export function getSectorMeta(sector: string | null | undefined): SectorMeta {
-  if (!sector) return FALLBACK;
-  const key = sector.toLowerCase().trim();
-  if (SECTOR_MAP[key]) return SECTOR_MAP[key];
-  for (const [k, v] of Object.entries(SECTOR_MAP)) {
-    if (key.includes(k)) return v;
+function monogram(sector: string | null | undefined): string {
+  const label = humanize(sector ?? "");
+  const words = label.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "—";
+  if (words.length === 1) {
+    const w = words[0];
+    return (w[0] + (w[1] ?? "")).toUpperCase();
   }
-  return FALLBACK;
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
 export function SectorIcon({
@@ -60,22 +57,34 @@ export function SectorIcon({
   className?: string;
   size?: "sm" | "md" | "lg";
 }) {
-  const meta = getSectorMeta(sector);
+  const hue = hueFor(sector);
   const sizeClass =
-    size === "sm" ? "h-7 w-7 text-base" : size === "lg" ? "h-12 w-12 text-2xl" : "h-9 w-9 text-lg";
+    size === "sm"
+      ? "h-7 w-7 text-[10px]"
+      : size === "lg"
+        ? "h-12 w-12 text-sm"
+        : "h-9 w-9 text-[11px]";
+
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ring-white/40 shadow-soft",
+        "relative inline-flex shrink-0 items-center justify-center rounded-md font-mono font-semibold tracking-tight tabular-nums",
         sizeClass,
         className
       )}
       style={{
-        backgroundImage: `linear-gradient(135deg, oklch(0.92 0.08 ${meta.hue}), oklch(0.78 0.16 ${meta.hue}))`,
+        backgroundColor: `oklch(0.96 0.04 ${hue})`,
+        color: `oklch(0.32 0.12 ${hue})`,
+        border: `1px solid oklch(0.88 0.06 ${hue})`,
       }}
       aria-hidden
     >
-      <span className="drop-shadow-sm">{meta.emoji}</span>
+      {monogram(sector)}
     </span>
   );
+}
+
+// Kept for callers that still import getSectorMeta — returns hue only now.
+export function getSectorMeta(sector: string | null | undefined): { hue: number } {
+  return { hue: hueFor(sector) };
 }

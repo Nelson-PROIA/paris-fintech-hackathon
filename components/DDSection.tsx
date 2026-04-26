@@ -127,35 +127,49 @@ export function DDSection({
   // No brief yet — show CTA
   if (!data && !showStream) {
     return (
-      <section className="surface relative overflow-hidden p-6">
-        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-30" />
+      <section className="surface-paper relative overflow-hidden p-7">
+        <div className="pointer-events-none absolute inset-0 gradient-mesh opacity-35" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-brand/20 blur-3xl" />
         <div className="relative">
-          <Badge variant="brand" className="mb-3">
+          <Badge variant="brand" className="mb-3 px-3 py-1">
             <Spark />
             Agent on demand
           </Badge>
-          <h3 className="text-xl font-semibold tracking-tight">
-            One-page DD brief, in &lt;30 seconds.
+          <h3 className="font-serif text-2xl font-semibold tracking-tight md:text-3xl">
+            One-page DD brief, in{" "}
+            <span className="serif-italic gradient-headline">
+              &lt; 30 seconds.
+            </span>
           </h3>
-          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
             An AI analyst hits the web, reads the company website, checks the
             SIRENE registry if French, and structures findings into a brief
             with risk flags and cited sources. Watch it work live.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={generate}
-              className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105"
+              className="gradient-brand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-lift ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
             >
               <Spark />
               Run DD agent
             </button>
-            <span className="text-xs text-muted-foreground">
-              Web search · Page fetch · SIRENE lookup
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+                Web search
+              </span>
+              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+                Page fetch
+              </span>
+              <span className="rounded-full border border-border bg-card/70 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+                SIRENE lookup
+              </span>
             </span>
           </div>
-          {error && <p className="mt-3 text-sm text-destructive">Error: {error}</p>}
+          {error && (
+            <p className="mt-3 text-sm text-destructive">Error: {error}</p>
+          )}
         </div>
       </section>
     );
@@ -210,15 +224,42 @@ function AgentLog({
   streaming: boolean;
 }) {
   return (
-    <div className="surface relative overflow-hidden p-5">
+    <div className="surface-paper relative overflow-hidden p-5">
       <div
-        className={`absolute inset-x-0 top-0 h-px ${streaming ? "bg-gradient-to-r from-transparent via-brand to-transparent" : "bg-border"}`}
+        className={`absolute inset-x-0 top-0 h-px ${
+          streaming
+            ? "bg-gradient-to-r from-transparent via-brand to-transparent shimmer"
+            : "bg-border"
+        }`}
       />
       <div className="flex items-center gap-2">
-        <Spark />
-        <h3 className="text-sm font-semibold tracking-tight">DD Agent</h3>
+        <span
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
+            streaming ? "gradient-conic animate-spin-slow" : "bg-muted"
+          }`}
+        >
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-card text-brand">
+            <Spark />
+          </span>
+        </span>
+        <h3 className="font-serif text-base font-semibold tracking-tight">
+          DD Agent
+        </h3>
+        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          tool trace
+        </span>
         <Badge variant={streaming ? "brand" : "default"} className="ml-auto">
-          {streaming ? "live" : "trace"}
+          {streaming ? (
+            <>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
+              </span>
+              live
+            </>
+          ) : (
+            "trace"
+          )}
         </Badge>
       </div>
 
@@ -317,7 +358,7 @@ function StageDot({ state }: { state: StageState["state"] }) {
 
 function toolEmoji(tool: ToolEvent["tool"]): string {
   if (tool === "webSearch") return "🔍";
-  if (tool === "fetchUrl") return "📄";
+  if (tool === "fetchUrl") return "URL";
   return "🏛️";
 }
 

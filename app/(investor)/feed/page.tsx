@@ -47,27 +47,43 @@ export default async function FeedPage({
     <main className="mx-auto max-w-7xl px-6 py-10">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Badge variant="brand" className="mb-3">
+          <Badge variant="brand" className="mb-3 px-3 py-1">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
             </span>
             Live deal flow
           </Badge>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight">
-            Deals on the desk today.
+          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Deals on the{" "}
+            <span className="serif-italic gradient-headline">desk</span>{" "}
+            today.
           </h1>
-          <p className="mt-1 text-muted-foreground">
-            {campaigns.length} {campaigns.length === 1 ? "campaign" : "campaigns"}
-            {isFiltered && " matching your filters"} · {fmtEur(totalSeeking)}{" "}
-            seeking total
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
+                {campaigns.length}
+              </span>{" "}
+              {campaigns.length === 1 ? "campaign" : "campaigns"}
+              {isFiltered && " matching your filters"}
+            </span>
+            <span className="text-border">·</span>
+            <span>
+              <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
+                {fmtEur(totalSeeking)}
+              </span>{" "}
+              seeking total
+            </span>
           </p>
         </div>
         <Link
           href="/matches"
-          className="surface inline-flex items-center gap-2 px-4 py-2 text-sm font-medium transition hover:border-brand/40 hover:shadow-lift"
+          className="surface inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lift"
         >
-          <span className="inline-block h-2 w-2 rounded-full bg-brand animate-pulse-soft" />
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
+          </span>
           Show me my AI matches
           <ArrowRight />
         </Link>
@@ -97,10 +113,14 @@ export default async function FeedPage({
         ))}
       </ul>
       {campaigns.length === 0 && (
-        <div className="surface mt-12 flex flex-col items-center gap-2 p-12 text-center">
-          <span className="text-3xl">🪶</span>
-          <p className="text-base font-medium">Nothing matches those filters yet.</p>
-          <p className="text-sm text-muted-foreground">Try widening sectors, countries, or ticket range.</p>
+        <div className="surface-paper mt-12 flex flex-col items-center gap-3 p-12 text-center">
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">No results</span>
+          <p className="font-serif text-lg font-semibold">
+            Nothing matches those filters yet.
+          </p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Try widening sectors, countries, or ticket range.
+          </p>
         </div>
       )}
     </main>
@@ -142,9 +162,10 @@ function DealCard({
     >
       {/* Hover glow */}
       <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 opacity-0 blur-3xl transition group-hover:opacity-100" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent opacity-0 transition group-hover:opacity-100" />
 
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <SectorIcon sector={sector} size="md" />
           <div className="min-w-0">
             <h2 className="truncate text-base font-semibold leading-tight">
@@ -181,10 +202,10 @@ function DealCard({
 
       <div className="mt-auto flex items-end justify-between border-t border-border/60 pt-3">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
             Seeking
           </div>
-          <div className="mt-0.5 gradient-text text-2xl font-semibold tabular-nums">
+          <div className="mt-0.5 font-serif text-2xl font-semibold tabular-nums tracking-tight gradient-headline">
             {fmtEur(capitalSeeking)}
           </div>
         </div>

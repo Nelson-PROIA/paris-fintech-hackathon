@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const sans = Inter_Tight({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Loanly — AI-native marketplace for European SMBs and investors",
@@ -19,8 +29,14 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
-        <body className="min-h-screen antialiased" suppressHydrationWarning>{children}</body>
+      <html
+        lang="en"
+        className={cn("font-sans", sans.variable, mono.variable)}
+        suppressHydrationWarning
+      >
+        <body className="min-h-screen antialiased" suppressHydrationWarning>
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );

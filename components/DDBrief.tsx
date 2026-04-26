@@ -26,28 +26,36 @@ export function DDBriefView({
   cached: boolean;
 }) {
   return (
-    <article className="surface relative overflow-hidden p-6">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand/5 blur-3xl" />
+    <article className="surface-paper relative overflow-hidden p-6">
+      <div className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-brand/10 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent" />
       <header className="relative flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <Badge variant="brand">
+          <Badge variant="brand" className="px-3 py-1">
             <Spark /> AI due diligence
           </Badge>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-2 font-serif text-2xl font-semibold tracking-tight md:text-3xl">
             One-page brief
           </h2>
-          <p className="text-xs text-muted-foreground">
-            {cached ? "cached" : "fresh"} · generated {fmtTime(generatedAt)}
+          <p className="mt-1 flex items-center gap-2 text-xs">
+            <span
+              className={`inline-flex h-2 w-2 rounded-full ${
+                cached ? "bg-muted-foreground/40" : "bg-success animate-pulse-soft"
+              }`}
+            />
+            <span className="text-muted-foreground">
+              {cached ? "cached" : "fresh"} · generated {fmtTime(generatedAt)}
+            </span>
           </p>
         </div>
         <SentimentGauge score={brief.sentimentScore} />
       </header>
 
       <div className="relative mt-6 grid gap-5 md:grid-cols-2">
-        <Section title="Overview" body={brief.overview} icon="📌" wide />
-        <Section title="Traction" body={brief.traction} icon="📈" />
-        <Section title="Team" body={brief.team} icon="👥" />
-        <Section title="Market context" body={brief.marketContext} icon="🌍" wide />
+        <Section title="Overview" body={brief.overview} icon="" wide />
+        <Section title="Traction" body={brief.traction} icon="" />
+        <Section title="Team" body={brief.team} icon="" />
+        <Section title="Market context" body={brief.marketContext} icon="" wide />
       </div>
 
       <section className="relative mt-6">

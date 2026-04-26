@@ -276,16 +276,31 @@ export function OnboardingFlow({
             ))}
             {state === "active" && (
               <div className="flex items-center justify-between pt-2">
-                <p className="text-xs text-muted-foreground">
+                <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
                   Your answers are saved as you go.
                 </p>
                 {isStepComplete(step) && (
                   <button
                     type="button"
                     onClick={() => setEditingStepId(null)}
-                    className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+                    className="gradient-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
                   >
                     Continue
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M5 12h14" />
+                      <path d="m12 5 7 7-7 7" />
+                    </svg>
                   </button>
                 )}
               </div>

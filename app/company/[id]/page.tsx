@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { humanize } from "@/lib/format";
 import {
   getCompanyById,
   getOnboardingForCompany,
@@ -70,9 +71,9 @@ export default async function CompanyPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
-          {company.sector && <Tag>{company.sector}</Tag>}
-          {company.stage && <Tag>{company.stage}</Tag>}
-          {company.country && <Tag>{company.country}</Tag>}
+          {company.sector && <Tag>{humanize(company.sector)}</Tag>}
+          {company.stage && <Tag>{humanize(company.stage)}</Tag>}
+          {company.country && <Tag>{humanize(company.country)}</Tag>}
           {company.city && <Tag>{company.city}</Tag>}
         </div>
       </header>

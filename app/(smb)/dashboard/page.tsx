@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { listCampaignsByCompany, listCompaniesByUserId } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
-import { fmtEur, flagFor } from "@/lib/format";
+import { fmtEur, flagFor, humanize } from "@/lib/format";
 
 export default async function SMBDashboardPage() {
   const user = await requireRole("smb");
@@ -28,15 +28,26 @@ export default async function SMBDashboardPage() {
     <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Badge variant="brand" className="mb-3">
+          <Badge variant="brand" className="mb-3 px-3 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand animate-pulse-soft" />
             Founder dashboard
           </Badge>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight">
-            {companies.length === 0
-              ? `Welcome, ${user.display_name ?? user.email.split("@")[0]}.`
-              : "Your fundraising desk."}
+          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            {companies.length === 0 ? (
+              <>
+                <span className="serif-italic gradient-headline">Welcome,</span>{" "}
+                {user.display_name ?? user.email.split("@")[0]}.
+              </>
+            ) : (
+              <>
+                Your <span className="serif-italic gradient-headline">
+                  fundraising desk
+                </span>
+                .
+              </>
+            )}
           </h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-2 text-muted-foreground">
             {companies.length === 0
               ? "Spin up your first company to start matching with investors."
               : `${companies.length} compan${companies.length === 1 ? "y" : "ies"} · ${allCampaigns.length} campaign${allCampaigns.length === 1 ? "" : "s"} on the desk.`}
@@ -44,7 +55,7 @@ export default async function SMBDashboardPage() {
         </div>
         <Link
           href="/onboard"
-          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 hover:brightness-105"
+          className="gradient-brand inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
         >
           <Plus />
           Add a company
@@ -88,16 +99,18 @@ export default async function SMBDashboardPage() {
 
       <section className="mt-8 space-y-5">
         {companies.length === 0 ? (
-          <div className="surface flex flex-col items-center gap-3 p-10 text-center">
-            <span className="text-3xl">🚀</span>
-            <h2 className="text-lg font-semibold">No companies yet</h2>
+          <div className="surface-paper flex flex-col items-center gap-3 p-12 text-center">
+            <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Get started</span>
+            <h2 className="font-serif text-2xl font-semibold tracking-tight">
+              No companies yet
+            </h2>
             <p className="max-w-sm text-sm text-muted-foreground">
               Tell us about your business in a quick conversation. Our AI
               analyst structures your pitch and creates your first campaign.
             </p>
             <Link
               href="/onboard"
-              className="gradient-brand mt-2 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 hover:brightness-105"
+              className="gradient-brand mt-2 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-brand-foreground shadow-lift ring-1 ring-inset ring-white/20 transition hover:brightness-105 active:translate-y-px"
             >
               Onboard your first company
               <ArrowRight />
@@ -107,20 +120,24 @@ export default async function SMBDashboardPage() {
           companies.map((co) => {
             const campaigns = listCampaignsByCompany(co.id);
             return (
-              <div key={co.id} className="surface space-y-4 p-6">
+              <div
+                key={co.id}
+                className="surface-paper relative space-y-4 overflow-hidden p-6"
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent" />
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <SectorIcon sector={co.sector} size="md" />
                     <div>
                       <Link
                         href={`/company/${co.id}`}
-                        className="text-lg font-semibold tracking-tight hover:underline"
+                        className="font-serif text-xl font-semibold tracking-tight transition hover:text-brand hover:underline-offset-2 hover:underline"
                       >
                         {co.name}
                       </Link>
-                      <div className="mt-0.5 flex flex-wrap gap-1.5">
-                        {co.sector && <Badge variant="brand">{co.sector}</Badge>}
-                        {co.stage && <Badge>{co.stage}</Badge>}
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {co.sector && <Badge variant="brand">{humanize(co.sector)}</Badge>}
+                        {co.stage && <Badge>{humanize(co.stage)}</Badge>}
                         {co.country && (
                           <Badge variant="ghost">
                             {flagFor(co.country)} {co.country}
@@ -131,34 +148,35 @@ export default async function SMBDashboardPage() {
                   </div>
                   <Link
                     href={`/company/${co.id}/new-campaign`}
-                    className="rounded-md border border-border bg-card/60 px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                    className="rounded-md border border-border bg-card/60 px-3 py-1.5 text-xs font-medium transition hover:border-brand/30 hover:bg-accent"
                   >
                     + New campaign
                   </Link>
                 </div>
                 {co.pitch && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="border-l-2 border-brand/30 pl-3 text-sm leading-relaxed text-muted-foreground">
                     {co.pitch}
                   </p>
                 )}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                       Campaigns ({campaigns.length})
                     </h3>
                   </div>
                   {campaigns.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="rounded-lg border border-dashed border-border/80 p-3 text-xs text-muted-foreground">
                       No campaigns yet. Add one to start raising.
                     </p>
                   ) : (
-                    <ul className="divide-y divide-border rounded-lg border border-border bg-card/40">
+                    <ul className="divide-y divide-border/70 rounded-lg border border-border bg-card/60">
                       {campaigns.map((c) => (
                         <li key={c.id}>
                           <Link
                             href={`/campaign/${c.id}`}
-                            className="group flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-accent/40"
+                            className="group relative flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-accent/40"
                           >
+                            <span className="pointer-events-none absolute inset-y-0 left-0 w-0.5 bg-brand/40 opacity-0 transition group-hover:opacity-100" />
                             <span className="flex min-w-0 items-center gap-3">
                               <StatusDot status={c.status} />
                               <span className="truncate font-medium">
@@ -166,7 +184,7 @@ export default async function SMBDashboardPage() {
                               </span>
                             </span>
                             <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                              <span className="tabular-nums">
+                              <span className="font-serif text-base font-semibold tracking-tight tabular-nums text-foreground">
                                 {fmtEur(c.capital_seeking_eur)}
                               </span>
                               <Badge
@@ -211,22 +229,30 @@ function StatCard({
   tone?: "brand" | "success";
 }) {
   return (
-    <div className="surface relative overflow-hidden p-5">
+    <div className="surface-paper relative overflow-hidden p-5">
       {tone && (
         <div
           className={`pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full blur-2xl ${
-            tone === "brand" ? "bg-brand/15" : "bg-success/15"
+            tone === "brand" ? "bg-brand/20" : "bg-success/20"
+          }`}
+        />
+      )}
+      {tone && (
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute -left-px top-3 h-8 w-1 rounded-r-full ${
+            tone === "brand" ? "bg-gradient-to-b from-brand to-chart-4" : "bg-gradient-to-b from-success to-success/40"
           }`}
         />
       )}
       <div className="relative">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           {label}
         </div>
         <div
-          className={`mt-2 text-2xl font-semibold tabular-nums ${
+          className={`mt-1.5 font-serif text-2xl font-semibold tabular-nums tracking-tight ${
             tone === "brand"
-              ? "gradient-text"
+              ? "gradient-headline"
               : tone === "success"
                 ? "text-success"
                 : ""
@@ -235,7 +261,7 @@ function StatCard({
           {value}
         </div>
         {sub && (
-          <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div>
+          <div className="mt-0.5 text-[11px] text-muted-foreground">{sub}</div>
         )}
       </div>
     </div>
