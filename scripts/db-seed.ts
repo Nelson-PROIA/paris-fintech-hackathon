@@ -1,3 +1,5 @@
+import path from "node:path";
+import { randomUUID } from "node:crypto";
 import {
   getDb,
   upsertUser,
@@ -5,8 +7,10 @@ import {
   createCampaign,
   createInvestor,
 } from "../lib/db";
+import { writePdf } from "./_pdf";
 
 const db = getDb();
+const UPLOAD_DIR = path.resolve(process.cwd(), "data/uploads");
 
 console.log("Wiping seed rows…");
 db.exec(`
@@ -16,6 +20,33 @@ db.exec(`
   DELETE FROM investors WHERE user_id LIKE 'seed-%';
   DELETE FROM users WHERE id LIKE 'seed-%';
 `);
+
+type CollateralSeed = {
+  type: "real_estate" | "equipment" | "contract" | "inventory" | "receivables" | "other";
+  description: string;
+  declared_value_eur: number;
+  /** PDF body — first line becomes title, rest body. Used for AI-readable doc. */
+  document: { title: string; lines: string[] };
+  /** Pre-baked AI verdict so the demo shows verification immediately. */
+  verdict: {
+    documentRecognised: boolean;
+    documentType: string | null;
+    matchesClaim: "yes" | "partial" | "no" | "unclear";
+    valuePlausible: "yes" | "ambiguous" | "no" | "unclear";
+    redFlags: string[];
+    summary: string;
+    confidenceScore: number;
+  };
+};
+
+type CampaignSeed = {
+  id?: string;
+  title: string;
+  capital_seeking_eur: number;
+  use_of_funds: string;
+  pitch_summary: string;
+  collaterals?: CollateralSeed[];
+};
 
 type CompanySeed = {
   id: string;
@@ -32,13 +63,7 @@ type CompanySeed = {
   monthly_burn_eur: number;
   pitch: string;
   website: string | null;
-  campaigns: Array<{
-    id?: string;
-    title: string;
-    capital_seeking_eur: number;
-    use_of_funds: string;
-    pitch_summary: string;
-  }>;
+  campaigns: CampaignSeed[];
 };
 
 const COMPANIES: CompanySeed[] = [
@@ -56,7 +81,7 @@ const COMPANIES: CompanySeed[] = [
     monthly_revenue_eur: 85000,
     monthly_burn_eur: 65000,
     pitch:
-      "Specialty coffee roaster supplying 80+ Paris cafes and 15 corporate accounts. Founder is ex-Starbucks Europe head of sourcing.",
+      "Atelier Paris is a specialty coffee roaster founded in 2018 by Marc Lefevre, previously head of sourcing for Starbucks Europe. The company operates a 240sqm roastery in the 11th arrondissement and supplies more than 80 independent Paris cafes and 15 corporate accounts (Doctolib, Alan, BlaBlaCar). Revenue is €85k MRR with 12% MoM growth sustained for 6 months, gross margin 58%, and a 12-person team including two trained Q-graders. Inputs are sourced direct-trade from 6 origin farms in Ethiopia, Colombia and Guatemala. The next 18 months focus on a Lyon roastery to serve the south-east corporate market and on a B2B sales team to convert the 40-account waitlist accumulated through inbound only.",
     website: "https://atelierparis.coffee",
     campaigns: [
       {
@@ -66,7 +91,72 @@ const COMPANIES: CompanySeed[] = [
         use_of_funds:
           "Open second roasting facility in Lyon (€220k), hire 3 B2B sales reps (€90k), wholesale inventory buffer (€40k).",
         pitch_summary:
-          "Specialty coffee roaster supplying 80+ Paris cafes and 15 corporate accounts. €85k MRR, growing 12% MoM for 6 months. Seeking €350k to expand to Lyon and capture the corporate office market.",
+          "Specialty coffee roaster supplying 80+ Paris cafes and 15 corporate accounts. €85k MRR, growing 12% MoM for 6 months, gross margin 58%. €350k unlocks a Lyon roastery and a 3-person B2B sales team to convert the 40-account inbound waitlist.",
+        collaterals: [
+          {
+            type: "equipment",
+            description: "Probat P25 roaster (2022, owned outright)",
+            declared_value_eur: 78000,
+            document: {
+              title: "Equipment valuation - Probat P25",
+              lines: [
+                "Issued by: Cafetiers SAS - certified equipment appraisal",
+                "Date: 2026-02-18",
+                "Asset: Probat P25 commercial roaster, 25kg/batch capacity",
+                "Year of manufacture: 2022, single owner since new",
+                "Condition: excellent, 980 hours of use, full service log",
+                "Serial number: PB-25-A-0142",
+                "Fair market value: 78,000 EUR",
+                "Replacement cost (new): 96,500 EUR",
+                "Located at: 47 rue Saint-Maur, 75011 Paris (Atelier Paris main roastery)",
+                "Note: appraisal performed on-site by Cafetiers SAS (RCS Paris 814 322 901)",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "third-party equipment appraisal",
+              matchesClaim: "yes",
+              valuePlausible: "yes",
+              redFlags: [],
+              summary:
+                "Independent appraisal from Cafetiers SAS confirms a 2022 Probat P25 roaster owned outright by Atelier Paris. Declared value of 78,000 EUR matches the appraised fair market value exactly; replacement cost (96,500 EUR) sets a reasonable upper bound. Asset is on-site at the rue Saint-Maur roastery.",
+              confidenceScore: 88,
+            },
+          },
+          {
+            type: "receivables",
+            description: "B2B accounts receivable book (60 active customers)",
+            declared_value_eur: 142000,
+            document: {
+              title: "Aged receivables report Q1 2026",
+              lines: [
+                "Atelier Paris Coffee Roasters",
+                "Period: 2026-01-01 to 2026-03-31",
+                "Total open receivables: 142,318 EUR across 60 customers",
+                "Aging buckets:",
+                "  0-30 days: 88,210 EUR (62%)",
+                "  31-60 days: 41,540 EUR (29%)",
+                "  61-90 days: 9,820 EUR (7%)",
+                "  90+ days: 2,748 EUR (2%)",
+                "Top 5 customer concentration: 31% (Doctolib, Alan, BlaBlaCar, Cafe de Flore, Le Pain Quotidien)",
+                "Bad debt written off in last 12 months: 1,210 EUR (0.6% of revenue)",
+                "Report extracted from Pennylane on 2026-04-02",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "aged receivables report",
+              matchesClaim: "yes",
+              valuePlausible: "yes",
+              redFlags: [
+                "2,748 EUR (2%) sitting in 90+ day bucket — small but worth checking the 1-2 customers behind it.",
+              ],
+              summary:
+                "Pennylane-exported aged receivables report supports a 142,318 EUR book — within 0.2% of the 142,000 EUR claim. Aging is clean (62% under 30 days), bad-debt history is healthy (0.6% of revenue), and customer concentration of 31% across 5 accounts is moderate.",
+              confidenceScore: 84,
+            },
+          },
+        ],
       },
     ],
   },
@@ -84,7 +174,7 @@ const COMPANIES: CompanySeed[] = [
     monthly_revenue_eur: 22000,
     monthly_burn_eur: 35000,
     pitch:
-      "GDPR-compliance copilot for European mid-market. Two solo founders, both ex-OVH cloud security.",
+      "Meridian Compliance Tools is a GDPR-compliance copilot for European mid-market companies (50-500 employees). Co-founded in 2022 by Sophie Martin (ex-OVH cloud security lead, 8y) and Adrien Petit (ex-OVH staff SRE, 11y). The product ingests data inventories from Notion, GDrive, Slack, Linear and Salesforce, then surfaces non-compliant flows (PII in logs, retention violations, untracked sub-processors) with one-click remediation snippets. €22k MRR across 38 paying customers (avg ACV €580/mo), net dollar retention 118%, monthly logo churn below 2%. Three months of free time on the AWS European Activate program. The 18-month roadmap is gated on shipping ML auto-redaction (the #1 customer ask) and extending runway to reach €60k MRR self-sustainably.",
     website: "https://meridian.tools",
     campaigns: [
       {
@@ -94,7 +184,38 @@ const COMPANIES: CompanySeed[] = [
         use_of_funds:
           "18-month runway extension to reach €60k MRR (€140k), hire one ML engineer for the auto-redact feature (€60k).",
         pitch_summary:
-          "GDPR-compliance copilot for European mid-market companies. €22k MRR across 38 paying customers, net retention 118%, churn under 2%. Seeking €200k to extend runway and ship the ML auto-redaction feature customers are asking for.",
+          "GDPR-compliance copilot for European mid-market. €22k MRR across 38 paying customers, NDR 118%, monthly logo churn under 2%. €200k extends runway 18 months and funds an ML hire for the auto-redact feature 11 customers have explicitly asked for.",
+        collaterals: [
+          {
+            type: "contract",
+            description: "Annual SaaS contract — Doctrine.fr (€36,000/yr)",
+            declared_value_eur: 36000,
+            document: {
+              title: "Annual SaaS subscription agreement",
+              lines: [
+                "Customer: Doctrine SAS (RCS Paris 808 102 119)",
+                "Vendor: Meridian Compliance SAS",
+                "Effective date: 2026-01-15",
+                "Term: 12 months, auto-renewing 12-month cycles",
+                "Subscription fee: 3,000 EUR per month (36,000 EUR annual)",
+                "Plan: Meridian Pro - 200 monitored data sources",
+                "Payment terms: NET 30, monthly invoicing",
+                "Termination: either party with 90 days written notice before renewal",
+                "Signed by: Antoine Dussaut (Doctrine, CTO), Sophie Martin (Meridian, CEO)",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "SaaS subscription contract",
+              matchesClaim: "yes",
+              valuePlausible: "yes",
+              redFlags: [],
+              summary:
+                "Counter-signed 12-month SaaS contract with Doctrine SAS at 3,000 EUR/month auto-renewing. Annual value matches the 36,000 EUR claim exactly. Standard 90-day notice termination — slight contraction risk, but counterparty (Doctrine) is well-known and creditworthy.",
+              confidenceScore: 86,
+            },
+          },
+        ],
       },
     ],
   },
@@ -201,6 +322,72 @@ const COMPANIES: CompanySeed[] = [
         use_of_funds: "Two new 5-axis CNC machines for aerospace contracts.",
         pitch_summary:
           "Precision machining for aerospace Tier-2 suppliers. €3.8M revenue, EBITDA-positive 5 years. Backlog secured.",
+        collaterals: [
+          {
+            type: "real_estate",
+            description: "Industrial workshop — 1,800sqm, Toulouse (owned)",
+            declared_value_eur: 1450000,
+            document: {
+              title: "Notarial deed extract - industrial property",
+              lines: [
+                "Notaire: Maitre Pierre Garnier, SCP Garnier-Vidal, Toulouse",
+                "Acte de vente du 2009-06-22, repertoire numero 2009-1842",
+                "Vendeur: SCI Aeronova (RCS Toulouse 421 558 902)",
+                "Acquereur: Forge Mecanique SAS (RCS Toulouse 511 880 743)",
+                "Bien: local industriel, 1,810 m2, parcelle AB 0142",
+                "Adresse: 8 avenue Pierre-Georges Latecoere, 31200 Toulouse",
+                "Prix d'acquisition: 980,000 EUR",
+                "Estimation actuelle: 1,450,000 EUR (rapport CBRE 2026-01)",
+                "Hypotheque: solde 280,000 EUR, echeance 2031, BPCE",
+                "Note: bien librement detenu, aucune servitude declaree",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "notarial deed extract + appraisal",
+              matchesClaim: "yes",
+              valuePlausible: "yes",
+              redFlags: [
+                "Outstanding mortgage of 280,000 EUR with BPCE (matures 2031) — net equity is closer to 1.17M EUR.",
+              ],
+              summary:
+                "Notarial deed confirms Forge Mecanique owns the 1,810sqm industrial workshop in Toulouse since 2009. CBRE 2026 appraisal supports the 1.45M EUR declared value. Outstanding 280k EUR mortgage with BPCE means net equity is around 1.17M EUR — that should be the figure investors evaluate against.",
+              confidenceScore: 81,
+            },
+          },
+          {
+            type: "contract",
+            description: "Multi-year supply agreement — Daher Aerospace (signed 2024, €4.2M backlog)",
+            declared_value_eur: 4200000,
+            document: {
+              title: "Master supply agreement",
+              lines: [
+                "Buyer: Daher Aerospace SAS",
+                "Supplier: Forge Mecanique SAS",
+                "Effective: 2024-09-01",
+                "Term: 5 years, expiring 2029-08-31",
+                "Scope: machined titanium and aluminium parts for A320neo programme",
+                "Pricing: indexed annually to LME aluminium + 3.4%",
+                "Estimated 5-year volume: 4.2 million EUR",
+                "Termination: 6 months notice, only for material breach",
+                "Annual minimum order: 700,000 EUR (with 15% adjustment band)",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "multi-year supply agreement",
+              matchesClaim: "partial",
+              valuePlausible: "ambiguous",
+              redFlags: [
+                "Declared value (4.2M EUR) reflects ESTIMATED 5-year volume, not a binding commitment — only the 700k EUR annual minimum is contractually guaranteed.",
+                "Pricing indexed to LME aluminium — the 3.4% margin is exposed if commodity volatility spikes.",
+              ],
+              summary:
+                "Genuine long-term supply agreement with a Tier-1 aerospace counterparty (Daher). The 4.2M EUR figure is the ESTIMATED 5-year volume, not a firm commitment — the contractually guaranteed minimum is 700k EUR/year (3.5M EUR over remaining term, with a 15% adjustment band). Investors should underwrite against the minimum, not the estimate.",
+              confidenceScore: 72,
+            },
+          },
+        ],
       },
     ],
   },
@@ -540,6 +727,40 @@ const COMPANIES: CompanySeed[] = [
         use_of_funds: "Fleet expansion + dispatch software.",
         pitch_summary:
           "Last-mile B2B parcel logistics for the southwest of France. €1.3M run-rate revenue.",
+        collaterals: [
+          {
+            type: "inventory",
+            description: "Delivery van fleet (12 vehicles, owned)",
+            declared_value_eur: 240000,
+            document: {
+              title: "Vehicle inventory listing",
+              lines: [
+                "Petit Paquet SAS - fleet roster",
+                "Date: 2026-03-12",
+                "Total declared: 12 Renault Kangoo Z.E. delivery vans",
+                "Confirmed in carte-grise scans:",
+                "  - 4 vans, 2019, 110-130k km each",
+                "  - 3 vans, 2020, 80-95k km each",
+                "Note: 5 vehicles listed in claim but no carte-grise present in this packet",
+                "Aggregate market value (Argus, vans present only): ~88,000 EUR",
+              ],
+            },
+            verdict: {
+              documentRecognised: true,
+              documentType: "internal vehicle inventory",
+              matchesClaim: "partial",
+              valuePlausible: "no",
+              redFlags: [
+                "Founder claims 12 vans but only 7 carte-grise documents are attached — 5 vehicles are unsubstantiated.",
+                "Argus market value of the documented 7 vans is ~88,000 EUR vs. declared collateral value of 240,000 EUR — even pro-rated to 12, the implied value is ~150,000 EUR, not 240,000.",
+                "All Kangoo Z.E. units are 5-7 years old with 80-130k km — they're closer to end-of-life than the declared value suggests.",
+              ],
+              summary:
+                "Document only substantiates 7 of the 12 claimed vans. Even taking the 7 at face value, market value is ~88k EUR (Argus); the 240k EUR declared total is roughly 2.7x the substantiated worth. The 5 missing carte-grise documents need to be produced before this can stand as collateral.",
+              confidenceScore: 58,
+            },
+          },
+        ],
       },
     ],
   },
@@ -596,7 +817,7 @@ for (const c of COMPANIES) {
     website: c.website,
   });
   for (const camp of c.campaigns) {
-    createCampaign({
+    const created = createCampaign({
       id: camp.id,
       company_id: c.id,
       title: camp.title,
@@ -605,6 +826,32 @@ for (const c of COMPANIES) {
       pitch_summary: camp.pitch_summary,
       status: "open",
     });
+    for (const col of camp.collaterals ?? []) {
+      const collateralId = randomUUID();
+      const filename = `${collateralId}.pdf`;
+      writePdf(UPLOAD_DIR, filename, col.document);
+      const now = Date.now();
+      db.prepare(
+        `INSERT INTO collaterals (
+           id, campaign_id, type, description, declared_value_eur,
+           document_filename, document_url,
+           ai_score, ai_verdict_json, ai_checked_at,
+           created_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        collateralId,
+        created.id,
+        col.type,
+        col.description,
+        col.declared_value_eur,
+        col.document.title.replace(/\s+/g, "-").toLowerCase().slice(0, 80) + ".pdf",
+        `/api/uploads/${filename}`,
+        col.verdict.confidenceScore,
+        JSON.stringify(col.verdict),
+        now,
+        now
+      );
+    }
   }
 }
 
