@@ -1,0 +1,7 @@
+HackHEC.ipynb => construction du meilleur modèle
+best_model_accounting.pkl => best modèle
+
+5 - Anonymous liasse 2015.PDF => document fiscal
+firm_features.csv => extraction à artir d'analyse textuelle de claude des features nécessaires pour le modèle
+
+HackHEC.py => Implémentation du modèle à l'entreprise Anonymous et résultat
