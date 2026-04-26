@@ -101,6 +101,11 @@ export function ThesisClient({
       setSavedAt(Date.now());
       setStatus("idle");
       router.refresh();
+      // Tell any listeners (e.g. MatchesClient on /matches) the thesis changed
+      // so they can re-rank without forcing the user to hit a separate button.
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("loanly:thesis-saved"));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("error");

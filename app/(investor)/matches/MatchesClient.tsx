@@ -48,6 +48,18 @@ export function MatchesClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Re-rank automatically whenever the user saves an updated thesis on this
+  // page (the ThesisClient editor lives just above and dispatches this event).
+  useEffect(() => {
+    function onThesisSaved() {
+      regenerate();
+    }
+    window.addEventListener("loanly:thesis-saved", onThesisSaved);
+    return () =>
+      window.removeEventListener("loanly:thesis-saved", onThesisSaved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function run() {
     abortRef.current?.abort();
     const ac = new AbortController();
@@ -231,7 +243,7 @@ function StreamProgress({
         </h3>
         <Badge
           variant={isLive ? "brand" : status === "done" ? "success" : "default"}
-          className="ml-auto"
+          className="ml-auto uppercase tracking-[0.16em] text-[10px]"
         >
           {isLive ? (
             <>
@@ -239,28 +251,31 @@ function StreamProgress({
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
               </span>
-              streaming
+              Streaming
             </>
           ) : status === "done" ? (
-            "complete"
+            "Complete"
           ) : (
-            "ready"
+            "Ready"
           )}
         </Badge>
       </div>
 
-      <ol className="relative mt-4 space-y-1">
+      <ol className="relative mt-4">
+        {/* Continuous spine centered on the 28px dots. Dots punch through it
+            via ring-card so the line never breaks but each step still feels
+            like a discrete stop. */}
         <span
-          className="pointer-events-none absolute left-[7px] top-1 h-[calc(100%-1.25rem)] w-px bg-border"
           aria-hidden
+          className="pointer-events-none absolute bottom-4 left-[14px] top-4 w-px bg-border"
         />
         {stages.map((s, i) => (
           <li
             key={s.id}
-            className="relative flex items-start gap-3 px-1 py-1.5 text-sm"
+            className="relative flex items-start gap-3 py-1.5 text-sm"
           >
             <StageDot state={s.state} />
-            <div className="flex-1">
+            <div className="flex-1 pt-px">
               <div
                 className={
                   s.state === "running"
@@ -285,8 +300,8 @@ function StreamProgress({
               )}
             </div>
             {s.state === "done" && (
-              <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
-                done
+              <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
+                Done
               </span>
             )}
           </li>
@@ -318,12 +333,18 @@ function StreamProgress({
 }
 
 function StageDot({ state }: { state: Stage["state"] }) {
+  // Same 28px footprint at every state so the spine is regular. The bg-card
+  // ring punches the line behind the dot cleanly (no stubs, no gaps).
+  const wrapper =
+    "relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ring-4 ring-card";
   if (state === "done")
     return (
-      <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 ring-2 ring-card dark:text-emerald-400">
+      <span
+        className={`${wrapper} bg-emerald-500/15 text-emerald-600 dark:text-emerald-400`}
+      >
         <svg
-          width="9"
-          height="9"
+          width="11"
+          height="11"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -338,13 +359,13 @@ function StageDot({ state }: { state: Stage["state"] }) {
     );
   if (state === "running")
     return (
-      <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center ring-2 ring-card">
-        <span className="absolute h-4 w-4 animate-ping rounded-full bg-brand/40" />
-        <span className="relative h-2 w-2 rounded-full bg-brand" />
+      <span className={`${wrapper} bg-brand/15`}>
+        <span className="absolute h-3 w-3 animate-ping rounded-full bg-brand/40" />
+        <span className="relative h-2.5 w-2.5 rounded-full bg-brand" />
       </span>
     );
   return (
-    <span className="relative z-10 mt-1 flex h-4 w-4 shrink-0 items-center justify-center ring-2 ring-card">
+    <span className={`${wrapper} bg-muted`}>
       <span className="h-2 w-2 rounded-full border border-border bg-card" />
     </span>
   );
