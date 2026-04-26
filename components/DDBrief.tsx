@@ -31,10 +31,10 @@ export function DDBriefView({
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            AI due diligence
+            Due diligence
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] md:text-3xl">
-            One-page brief
+            Analyst report
           </h2>
           <p className="mt-1 flex items-center gap-2 text-xs">
             <span
@@ -43,11 +43,13 @@ export function DDBriefView({
               }`}
             />
             <span className="text-muted-foreground">
-              {cached ? "cached" : "fresh"} · generated {fmtTime(generatedAt)}
+              {cached ? "Cached" : "Fresh"} · {fmtTime(generatedAt)} ·{" "}
+              {brief.evidence.length}{" "}
+              {brief.evidence.length === 1 ? "source" : "sources"}
             </span>
           </p>
         </div>
-        <SentimentGauge score={brief.sentimentScore} />
+        <SentimentBadge score={brief.sentimentScore} />
       </header>
 
       <div className="mt-6 grid gap-5 md:grid-cols-2">
@@ -164,53 +166,30 @@ function Section({
   );
 }
 
-function SentimentGauge({ score }: { score: number }) {
+function SentimentBadge({ score }: { score: number }) {
   const tone =
     score >= 70
-      ? { ring: "stroke-success", text: "text-success", label: "Strong" }
+      ? { ring: "border-emerald-500", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", label: "Strong" }
       : score >= 40
-        ? { ring: "stroke-warning", text: "text-warning", label: "Mixed" }
-        : { ring: "stroke-destructive", text: "text-destructive", label: "Cautious" };
-  const r = 30;
-  const c = 2 * Math.PI * r;
-  const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100);
+        ? { ring: "border-amber-500", text: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/10", label: "Mixed" }
+        : { ring: "border-rose-500", text: "text-rose-700 dark:text-rose-400", bg: "bg-rose-500/10", label: "Cautious" };
   return (
     <div className="flex items-center gap-3">
-      <div className="relative">
-        <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90">
-          <circle
-            cx="40"
-            cy="40"
-            r={r}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="6"
-            className="text-border"
-          />
-          <circle
-            cx="40"
-            cy="40"
-            r={r}
-            fill="none"
-            strokeWidth="6"
-            strokeLinecap="round"
-            className={`transition-all duration-700 ${tone.ring}`}
-            strokeDasharray={c}
-            strokeDashoffset={offset}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-lg font-semibold tabular-nums ${tone.text}`}>
-            {score}
-          </span>
-          <span className="text-[9px] uppercase tracking-widest text-muted-foreground">
-            sentiment
-          </span>
-        </div>
-      </div>
+      <span
+        className={`flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 ${tone.ring} ${tone.bg} ${tone.text}`}
+      >
+        <span className="text-base font-semibold leading-none tabular-nums">
+          {score}
+        </span>
+        <span className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.16em] opacity-80">
+          score
+        </span>
+      </span>
       <div className="text-right">
         <div className={`text-sm font-semibold ${tone.text}`}>{tone.label}</div>
-        <div className="text-xs text-muted-foreground">conviction</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          conviction
+        </div>
       </div>
     </div>
   );

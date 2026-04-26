@@ -44,7 +44,7 @@ export default async function HomePage() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
             </span>
-            Live AI matching · Mistral Large
+            Live AI matching
           </span>
           <h1 className="mt-6 text-balance text-[44px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[56px] md:text-[64px]">
             Capital, finally routed to{" "}
@@ -101,7 +101,7 @@ export default async function HomePage() {
             <Step
               n="02"
               title="Watch the match stream"
-              body="Mistral Large ranks 200+ live campaigns against your thesis in real time, with one-line reasoning per pick."
+              body="The matcher ranks 200+ live campaigns against your thesis in real time, with one-line reasoning per pick."
             />
             <Step
               n="03"
@@ -229,7 +229,7 @@ export default async function HomePage() {
             <LoanlyLogo size="sm" />
             <span className="opacity-60">· Paris Fintech Hackathon</span>
           </div>
-          <span>Built with Mistral Large · Next.js · Clerk</span>
+          <span>Built at the Paris Fintech Hackathon</span>
         </div>
       </footer>
     </main>

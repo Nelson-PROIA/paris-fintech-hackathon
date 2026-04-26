@@ -17,7 +17,7 @@ type Stage = {
 const INITIAL_STAGES: Stage[] = [
   { id: "thesis", label: "Reading your thesis", state: "pending" },
   { id: "filter", label: "Filtering live campaigns", state: "pending" },
-  { id: "rank", label: "Mistral Large is ranking deals", state: "pending" },
+  { id: "rank", label: "Ranking deals against your thesis", state: "pending" },
 ];
 
 export function MatchesClient({
@@ -229,9 +229,6 @@ function StreamProgress({
         <h3 className="text-base font-semibold tracking-[-0.01em]">
           AI matching
         </h3>
-        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Mistral Large
-        </span>
         <Badge
           variant={isLive ? "brand" : status === "done" ? "success" : "default"}
           className="ml-auto"

@@ -70,8 +70,8 @@ export default async function MatchesPage() {
           Top deals, ranked by your thesis.
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Type or speak your thesis. Mistral Large filters live campaigns and
-          ranks the best fits with one-line reasoning per pick.
+          Type or speak your thesis. The AI filters live campaigns and ranks
+          the best fits with one-line reasoning per pick.
         </p>
       </header>
 

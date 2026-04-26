@@ -80,6 +80,11 @@ export async function GET() {
         });
 
         if (!candidates.length) {
+          send({
+            type: "stage:done",
+            id: "rank",
+            detail: "Skipped — no candidates passed filters",
+          });
           send({ type: "done", count: 0, generatedAt: Date.now() });
           // Cache empty result
           getDb()
@@ -96,7 +101,7 @@ export async function GET() {
         send({
           type: "stage",
           id: "rank",
-          label: "Mistral Large is ranking deals",
+          label: "Ranking deals against your thesis",
         });
 
         const hydrated: MatchedItemHydrated[] = [];

@@ -129,15 +129,15 @@ export function DDSection({
     return (
       <section className="rounded-xl border border-border bg-card p-7">
         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Agent on demand
+          Due diligence
         </p>
         <h3 className="mt-2 text-2xl font-semibold tracking-[-0.02em] md:text-3xl">
-          One-page DD brief, in &lt; 30 seconds.
+          Structured analysis in under 30 seconds.
         </h3>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          An AI analyst hits the web, reads the company website, checks the
-          SIRENE registry if French, and structures findings into a brief
-          with risk flags and cited sources. Watch it work live.
+          The agent searches the web, reads the company site, checks the
+          SIRENE registry for French companies, and produces an analyst-style
+          report with risk flags and cited sources.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button
@@ -145,16 +145,16 @@ export function DDSection({
             onClick={generate}
             className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
           >
-            Run DD agent
+            Run analysis
           </button>
           <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
               Web search
             </span>
-            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
               Page fetch
             </span>
-            <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
+            <span className="rounded-full border border-border bg-background px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]">
               SIRENE lookup
             </span>
           </span>
@@ -217,18 +217,11 @@ function AgentLog({
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
-        <span
-          className={`inline-flex h-7 w-7 items-center justify-center rounded-full ${
-            streaming ? "border border-brand/40 bg-brand/10 animate-pulse-soft" : "bg-muted"
-          }`}
-        >
-          <span className="flex h-2 w-2 rounded-full bg-brand" />
-        </span>
         <h3 className="text-base font-semibold tracking-[-0.015em]">
-          DD Agent
+          Analyst trace
         </h3>
-        <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          tool trace
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {events.length} {events.length === 1 ? "tool call" : "tool calls"}
         </span>
         <Badge variant={streaming ? "brand" : "default"} className="ml-auto">
           {streaming ? (
@@ -240,7 +233,7 @@ function AgentLog({
               live
             </>
           ) : (
-            "trace"
+            "complete"
           )}
         </Badge>
       </div>
