@@ -11,7 +11,7 @@ import {
 import type { PortfolioResult } from "@/lib/ai/portfolio-constructor";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { Badge } from "@/components/ui/badge";
-import { fmtEur } from "@/lib/format";
+import { fmtEur, humanize } from "@/lib/format";
 
 // Brand-aligned chart palette using oklch tokens for visual consistency.
 const SECTOR_COLORS = [
@@ -27,7 +27,7 @@ const SECTOR_COLORS = [
 
 export function PortfolioView({ result }: { result: PortfolioResult }) {
   const sectorData = Object.entries(result.diversification.bySector)
-    .map(([name, value]) => ({ name, value }))
+    .map(([name, value]) => ({ name, label: humanize(name), value }))
     .sort((a, b) => b.value - a.value);
 
   const totalDeployed = result.totalDeployed || 1;
@@ -135,7 +135,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                       <td className="px-3 py-3">
                         {co.sector ? (
                           <Badge variant="ghost" className="text-[10px]">
-                            {co.sector}
+                            {humanize(co.sector)}
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -219,7 +219,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                 <Pie
                   data={sectorData}
                   dataKey="value"
-                  nameKey="name"
+                  nameKey="label"
                   innerRadius={60}
                   outerRadius={84}
                   paddingAngle={3}
@@ -267,7 +267,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                     }}
                   />
                   <span className="min-w-0 flex-1 truncate font-medium">
-                    {s.name}
+                    {s.label}
                   </span>
                   <span className="tabular-nums text-muted-foreground">
                     {pct.toFixed(0)}%

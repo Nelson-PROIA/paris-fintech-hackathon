@@ -223,17 +223,20 @@ function AgentLog({
         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           {events.length} {events.length === 1 ? "tool call" : "tool calls"}
         </span>
-        <Badge variant={streaming ? "brand" : "default"} className="ml-auto">
+        <Badge
+          variant={streaming ? "brand" : "default"}
+          className="ml-auto uppercase tracking-[0.16em] text-[10px]"
+        >
           {streaming ? (
             <>
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
               </span>
-              live
+              Live
             </>
           ) : (
-            "complete"
+            "Complete"
           )}
         </Badge>
       </div>

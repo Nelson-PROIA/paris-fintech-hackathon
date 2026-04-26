@@ -61,24 +61,35 @@ export type DDBrief = z.infer<typeof DDBriefSchema>;
 
 const AGENT_SYSTEM_PROMPT = `You are a senior investment analyst preparing a one-page due-diligence brief on a small business for a busy investor.
 
-You have three tools:
-- webSearch(query): public web search (Tavily). Returns up to 5 results with URLs and content excerpts.
-- fetchUrl(url): fetch a specific URL and return text content (capped at 50KB).
-- companyLookup(name, country): French SIRENE registry lookup. Returns null/empty for non-FR.
+Tools:
+- webSearch(query): Tavily public web search. Returns up to 5 hits with URLs and content excerpts. ALWAYS read the snippets — if they look relevant, fetchUrl the most promising URL.
+- fetchUrl(url): fetch HTML and return stripped text (50KB cap). Use this on the company's own website AND on the most promising search hits.
+- companyLookup(name, country): SIRENE registry lookup (French companies only).
 
-Process:
-1. Start with webSearch for "{company name} {city or country}" to find mentions, news, social presence.
-2. If they have a website (provided in the prompt), fetchUrl on it for traction signals and team info.
-3. If FR, run companyLookup to confirm legal existence and founding date.
-4. Optionally do one more webSearch on something specific you need to verify.
-5. Stop calling tools after 4-6 useful tool steps.
+Search strategy — be precise, search like a human, never one-shot a generic name:
+
+1. Build queries that disambiguate. The COMPANY NAME alone is almost never enough — it collides with everything (a "Petit Paquet" search hits Instagram bakeries). Always combine name + a disambiguator from the brief: city, sector keyword, founder name, product name, SIRET hint, or domain.
+   Good: "Petit Paquet logistique Bordeaux", "Boulangerie Martin SAS Lyon SIREN", "Lisbonne Data analytics Portugal".
+   Bad: "Petit Paquet", "Loanly".
+
+2. If the website is provided in the brief, fetchUrl it FIRST (before more searches) — it usually has team, pricing, and product detail you can't get otherwise.
+
+3. After the first webSearch, if results look relevant, IMMEDIATELY fetchUrl the most promising 1–2 URLs. Don't pile up generic searches before reading anything.
+
+4. If the country is FR, call companyLookup(name, "FR") once. If found, the legal name + founding date + activity code anchor everything else; surface them in your notes.
+
+5. If a search comes back empty, don't repeat the same query — vary it: drop a word, add a sector synonym ("logistics" vs "logistique" vs "delivery"), try the founder name from the company brief, or try a site:linkedin.com / site:societe.com filter.
+
+6. Stop after 4–7 useful tool calls. Diminishing returns past that.
 
 Be skeptical:
-- If the company has zero public footprint, that's a risk flag.
-- If their website is barely a landing page or looks abandoned, that's a risk flag.
-- If pitch claims (revenue, customers) are not corroborated by any public source, flag it.
+- Zero public footprint after disambiguated searches → real risk flag (medium-to-high).
+- Website is a thin landing page / 404 / abandoned blog → risk flag (medium).
+- Pitch claims (MRR, headcount, customers) with NO corroboration → flag it as medium.
+- SIRENE entry inactive, in liquidation, or activity code mismatch → high severity.
+- BUT: a tiny SMB legitimately has a small footprint. "No Wikipedia article" is not a risk; "no website + no SIRENE + no LinkedIn" is.
 
-When you stop calling tools, output a plain-text findings note that summarises: overview, traction, team background, market context, risk flags, and the URLs you actually used. A separate process will structure your findings into the final brief.`;
+When you stop calling tools, write a plain-text findings note covering: overview, traction, team background, market context, risk flags (with severity), and the URLs you actually relied on. A separate pass will structure this into the final brief.`;
 
 const STRUCTURE_SYSTEM_PROMPT = `You are converting an investment analyst's research notes into a structured DD brief.
 
@@ -273,16 +284,31 @@ function summariseToolResult(
 ): string {
   try {
     if (tool === "webSearch") {
-      const n = Array.isArray(result?.results) ? result.results.length : 0;
+      // webSearch returns WebSearchResult[] directly, NOT { results: [...] }.
+      const n = Array.isArray(result) ? result.length : 0;
       return `${n} result${n === 1 ? "" : "s"} for "${truncate(String(input?.query ?? ""), 60)}"`;
     }
     if (tool === "fetchUrl") {
+      // fetchUrlText returns { ok, status, text, ... }. Show byte size +
+      // surface non-200/network errors so the user can see what actually
+      // happened instead of a misleading "0.0 KB" line.
+      if (!result?.ok) {
+        const reason = typeof result?.status === "number"
+          ? `HTTP ${result.status}`
+          : "unreachable";
+        return `${reason} from ${hostnameSafe(input?.url)}`;
+      }
       const len = typeof result?.text === "string" ? result.text.length : 0;
       return `${(len / 1024).toFixed(1)} KB from ${hostnameSafe(input?.url)}`;
     }
     if (tool === "companyLookup") {
+      // companyLookup returns { found: true, ... } | { found: false, reason: string }.
+      if (result?.found) {
+        const legalName = result.legal_name ? ` — ${result.legal_name}` : "";
+        return `match in SIRENE${legalName}`;
+      }
       if (result?.reason === "non_FR_lookup_unsupported") return "non-FR (skipped)";
-      if (result?.matches?.length) return `${result.matches.length} match${result.matches.length === 1 ? "" : "es"} in SIRENE`;
+      if (result?.reason === "missing_sirene_token") return "SIRENE token missing";
       return "no match in SIRENE";
     }
   } catch {}
