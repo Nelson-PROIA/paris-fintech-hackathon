@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { LoanlyLogo } from "@/components/ui/loanly-mark";
+import { WalletPill } from "@/components/contract/WalletPill";
 
 type NavLink = { href: string; label: string; action?: boolean };
 
@@ -66,6 +67,7 @@ export function TopNav({ role }: { role: "smb" | "investor" }) {
           </ul>
         </div>
         <div className="flex items-center gap-3">
+          <WalletPill />
           <span className="hidden items-center rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:inline-flex">
             {role === "smb" ? "Founder" : "Investor"}
           </span>

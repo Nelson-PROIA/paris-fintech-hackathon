@@ -2,9 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import {
+  getCampaignContract,
   getCampaignWithCompany,
   getDb,
+  listChainEventsByCampaign,
   listCollateralsByCampaign,
+  listCommitmentsByCampaign,
   listRatingsForUser,
 } from "@/lib/db";
 import { DDSection } from "@/components/DDSection";
@@ -13,6 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { fmtEur, fmtEurExact, humanize } from "@/lib/format";
 import type { DDBrief } from "@/lib/ai/dd-analyst";
+import { computeOwedEur } from "@/lib/chain/marketplace";
+import { readChainAddresses } from "@/lib/chain/config";
+import { CommitmentProgress } from "@/components/contract/CommitmentProgress";
+import { ContractTermsCard } from "@/components/contract/ContractTermsCard";
+import { CommitDialog } from "@/components/contract/CommitDialog";
+import { RepayPanel } from "@/components/contract/RepayPanel";
+import { InitiateContractDialog } from "@/components/contract/InitiateContractDialog";
+import { CampaignTimeline } from "@/components/contract/CampaignTimeline";
 
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -57,12 +68,39 @@ export default async function CampaignPage({
     user.type === "investor" ? getCachedDDBrief(co.id) : null;
   const ratings = listRatingsForUser(co.user_id);
 
-  const statusVariant =
-    camp.status === "open"
+  const contract = getCampaignContract(camp.id);
+  const commitments = contract ? listCommitmentsByCampaign(camp.id) : [];
+  const events = contract ? listChainEventsByCampaign(camp.id, 50) : [];
+  const chainAddrs = readChainAddresses();
+  const contractView = contract
+    ? {
+        ...contract,
+        owed_eur: computeOwedEur(contract.target_eur, contract.interest_bps),
+      }
+    : null;
+
+  const remainingEur = contractView
+    ? Math.max(0, contractView.target_eur - contractView.total_committed_eur)
+    : camp.capital_seeking_eur;
+  const investorCount = new Set(commitments.map((c) => c.investor_user_id))
+    .size;
+  const displayStatus: string = contractView
+    ? contractView.on_chain_state
+    : camp.status;
+  const statusVariant: "success" | "brand" | "warning" | "danger" | "default" =
+    displayStatus === "open"
       ? "success"
-      : camp.status === "funded"
+      : displayStatus === "funded"
         ? "brand"
-        : "default";
+        : displayStatus === "repaying"
+          ? "warning"
+          : displayStatus === "cancelled"
+            ? "danger"
+            : displayStatus === "repaid"
+              ? "default"
+              : displayStatus === "funded"
+                ? "brand"
+                : "default";
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -96,12 +134,12 @@ export default async function CampaignPage({
               <Badge variant={statusVariant}>
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    camp.status === "open"
+                    displayStatus === "open"
                       ? "bg-success animate-pulse-soft"
                       : "bg-current"
                   }`}
                 />
-                {camp.status}
+                {displayStatus}
               </Badge>
               {co.sector && <Badge variant="brand">{humanize(co.sector)}</Badge>}
               {co.stage && <Badge>{humanize(co.stage)}</Badge>}
@@ -168,6 +206,110 @@ export default async function CampaignPage({
           <PanelSection title="Pitch">{camp.pitch_summary}</PanelSection>
         )}
       </div>
+
+      {/* On-chain contract */}
+      <section className="mt-8 space-y-4">
+        {!contractView && isOwner && (
+          <InitiateContractDialog
+            campaignId={camp.id}
+            targetEur={camp.capital_seeking_eur}
+          />
+        )}
+
+        {!contractView && !isOwner && (
+          <section className="rounded-xl border border-dashed border-border bg-card/60 p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Smart contract
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The borrower hasn&apos;t deployed a contract yet. You can&apos;t
+              commit until they do.
+            </p>
+          </section>
+        )}
+
+        {contractView && (
+          <div className="grid gap-4 md:grid-cols-[2fr_1fr]">
+            <CommitmentProgress
+              target={contractView.target_eur}
+              committed={contractView.total_committed_eur}
+              investorCount={investorCount}
+              deadlineMs={contractView.commit_deadline}
+            />
+            <div className="flex flex-col items-stretch justify-center gap-3 rounded-xl border border-border bg-card p-6">
+              {user.type === "investor" &&
+                !isOwner &&
+                contractView.on_chain_state === "open" &&
+                remainingEur > 0 && (
+                  <CommitDialog
+                    campaignId={camp.id}
+                    remainingEur={remainingEur}
+                    interestBps={contractView.interest_bps}
+                    durationDays={contractView.duration_days}
+                  />
+                )}
+              {user.type === "investor" &&
+                !isOwner &&
+                contractView.on_chain_state === "open" &&
+                remainingEur === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Target reached — awaiting auto-disbursement.
+                  </p>
+                )}
+              {user.type === "investor" &&
+                !isOwner &&
+                contractView.on_chain_state === "funded" && (
+                  <p className="text-sm text-muted-foreground">
+                    Awaiting borrower repayments.
+                  </p>
+                )}
+              {user.type === "investor" &&
+                !isOwner &&
+                contractView.on_chain_state === "repaying" && (
+                  <p className="text-sm text-muted-foreground">
+                    Borrower is repaying — your share is credited
+                    automatically.
+                  </p>
+                )}
+              {contractView.on_chain_state === "repaid" && (
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                  Cycle complete · principal + interest distributed.
+                </p>
+              )}
+              {contractView.on_chain_state === "cancelled" && (
+                <p className="text-sm text-rose-700 dark:text-rose-300">
+                  Campaign cancelled · all commitments refunded.
+                </p>
+              )}
+              {isOwner && contractView.on_chain_state === "open" && (
+                <p className="text-xs text-muted-foreground">
+                  Contract is live. Investors can commit until the deadline.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {contractView &&
+          isOwner &&
+          (contractView.on_chain_state === "funded" ||
+            contractView.on_chain_state === "repaying") && (
+            <RepayPanel
+              campaignId={camp.id}
+              owedEur={contractView.owed_eur}
+              totalRepaidEur={contractView.total_repaid_eur}
+            />
+          )}
+
+        {contractView && (
+          <ContractTermsCard
+            contract={contractView}
+            marketplaceAddress={chainAddrs?.marketplaceAddress}
+          />
+        )}
+
+        {contractView && <CampaignTimeline events={events} />}
+      </section>
 
       {/* Collateral */}
       <section className="mt-8">

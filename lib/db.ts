@@ -170,11 +170,94 @@ function bootstrap(db: Database.Database): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_onboarding_user ON onboarding_profiles(user_id);
+
+    -- ── Smart-contract layer ────────────────────────────────────────────────
+
+    CREATE TABLE IF NOT EXISTS wallets (
+      user_id TEXT PRIMARY KEY REFERENCES users(id),
+      address TEXT NOT NULL UNIQUE,
+      encrypted_pk TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_wallets_address ON wallets(address);
+
+    CREATE TABLE IF NOT EXISTS campaign_contracts (
+      campaign_id TEXT PRIMARY KEY REFERENCES campaigns(id),
+      borrower_address TEXT NOT NULL,
+      target_eur INTEGER NOT NULL,
+      interest_bps INTEGER NOT NULL,
+      duration_days INTEGER NOT NULL,
+      commit_deadline INTEGER NOT NULL,
+      deploy_tx_hash TEXT NOT NULL,
+      total_committed_eur INTEGER NOT NULL DEFAULT 0,
+      total_repaid_eur INTEGER NOT NULL DEFAULT 0,
+      funded_at INTEGER,
+      repaid_at INTEGER,
+      cancelled_at INTEGER,
+      on_chain_state TEXT NOT NULL DEFAULT 'open'
+        CHECK(on_chain_state IN ('open','funded','repaying','repaid','cancelled')),
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_contracts_state ON campaign_contracts(on_chain_state);
+
+    CREATE TABLE IF NOT EXISTS commitments (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id),
+      investor_user_id TEXT NOT NULL REFERENCES users(id),
+      investor_address TEXT NOT NULL,
+      amount_eur INTEGER NOT NULL,
+      tx_hash TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'committed'
+        CHECK(status IN ('committed','refunded','repaid_partial','repaid')),
+      repaid_amount_eur INTEGER NOT NULL DEFAULT 0,
+      committed_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_commitments_campaign ON commitments(campaign_id);
+    CREATE INDEX IF NOT EXISTS idx_commitments_investor ON commitments(investor_user_id);
+
+    CREATE TABLE IF NOT EXISTS chain_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      campaign_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      tx_hash TEXT NOT NULL,
+      block_number INTEGER NOT NULL,
+      log_index INTEGER NOT NULL DEFAULT 0,
+      args_json TEXT NOT NULL,
+      ts INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chain_events_campaign ON chain_events(campaign_id, ts);
   `);
 
   // Idempotent column additions (SQLite doesn't support IF NOT EXISTS on
   // ALTER TABLE ADD COLUMN, so we swallow the duplicate-column error).
   addColumnIfMissing(db, "campaigns", "meta_json", "TEXT");
+  addColumnIfMissing(db, "chain_events", "log_index", "INTEGER NOT NULL DEFAULT 0");
+
+  // The original unique index (tx_hash, kind, campaign_id) was too coarse —
+  // a single `repay` tx emits one `InvestorPaid` event per investor, which
+  // would have been silently deduped. Migrate to (tx_hash, log_index,
+  // campaign_id). Pre-migration rows all have log_index=0 so we wipe them to
+  // avoid a conflict on the new unique index — they'll be re-indexed from
+  // chain on the next read of any campaign that already had a contract.
+  const oldDedupeIdx = db
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='index' AND name='uq_chain_events_dedupe'"
+    )
+    .get() as { sql?: string } | undefined;
+  if (oldDedupeIdx?.sql && !oldDedupeIdx.sql.includes("log_index")) {
+    db.exec(`DELETE FROM chain_events;`);
+    db.exec(`DROP INDEX IF EXISTS uq_chain_events_dedupe;`);
+  }
+  db.exec(
+    `CREATE UNIQUE INDEX IF NOT EXISTS uq_chain_events_dedupe
+       ON chain_events(tx_hash, log_index, campaign_id);`
+  );
 }
 
 function addColumnIfMissing(
@@ -950,4 +1033,325 @@ function safeJson<T>(raw: string | null, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+// ── Smart-contract layer ────────────────────────────────────────────────────
+
+export type WalletRow = {
+  user_id: string;
+  address: string;
+  encrypted_pk: string;
+  created_at: number;
+};
+
+export function getWalletByUserId(userId: string): WalletRow | null {
+  return (
+    (getDb()
+      .prepare("SELECT * FROM wallets WHERE user_id = ?")
+      .get(userId) as WalletRow | undefined) ?? null
+  );
+}
+
+export function insertWallet(
+  userId: string,
+  address: string,
+  encryptedPk: string
+): WalletRow {
+  getDb()
+    .prepare(
+      `INSERT INTO wallets (user_id, address, encrypted_pk, created_at)
+       VALUES (?, ?, ?, ?)`
+    )
+    .run(userId, address, encryptedPk, Date.now());
+  return getWalletByUserId(userId)!;
+}
+
+export function getWalletByAddress(address: string): WalletRow | null {
+  return (
+    (getDb()
+      .prepare("SELECT * FROM wallets WHERE LOWER(address) = LOWER(?)")
+      .get(address) as WalletRow | undefined) ?? null
+  );
+}
+
+export type OnChainState =
+  | "open"
+  | "funded"
+  | "repaying"
+  | "repaid"
+  | "cancelled";
+
+export type CampaignContractRow = {
+  campaign_id: string;
+  borrower_address: string;
+  target_eur: number;
+  interest_bps: number;
+  duration_days: number;
+  commit_deadline: number;
+  deploy_tx_hash: string;
+  total_committed_eur: number;
+  total_repaid_eur: number;
+  funded_at: number | null;
+  repaid_at: number | null;
+  cancelled_at: number | null;
+  on_chain_state: OnChainState;
+  created_at: number;
+  updated_at: number;
+};
+
+export function getCampaignContract(
+  campaignId: string
+): CampaignContractRow | null {
+  return (
+    (getDb()
+      .prepare("SELECT * FROM campaign_contracts WHERE campaign_id = ?")
+      .get(campaignId) as CampaignContractRow | undefined) ?? null
+  );
+}
+
+export type CreateCampaignContractInput = {
+  campaign_id: string;
+  borrower_address: string;
+  target_eur: number;
+  interest_bps: number;
+  duration_days: number;
+  commit_deadline: number;
+  deploy_tx_hash: string;
+};
+
+export function insertCampaignContract(
+  data: CreateCampaignContractInput
+): CampaignContractRow {
+  const now = Date.now();
+  getDb()
+    .prepare(
+      `INSERT INTO campaign_contracts (
+        campaign_id, borrower_address, target_eur, interest_bps,
+        duration_days, commit_deadline, deploy_tx_hash,
+        total_committed_eur, total_repaid_eur,
+        funded_at, repaid_at, cancelled_at,
+        on_chain_state, created_at, updated_at
+      ) VALUES (
+        @campaign_id, @borrower_address, @target_eur, @interest_bps,
+        @duration_days, @commit_deadline, @deploy_tx_hash,
+        0, 0,
+        NULL, NULL, NULL,
+        'open', @created_at, @updated_at
+      )`
+    )
+    .run({ ...data, created_at: now, updated_at: now });
+  return getCampaignContract(data.campaign_id)!;
+}
+
+export type CampaignContractPatch = Partial<
+  Pick<
+    CampaignContractRow,
+    | "total_committed_eur"
+    | "total_repaid_eur"
+    | "funded_at"
+    | "repaid_at"
+    | "cancelled_at"
+    | "on_chain_state"
+  >
+>;
+
+export function updateCampaignContract(
+  campaignId: string,
+  patch: CampaignContractPatch
+): CampaignContractRow | null {
+  const existing = getCampaignContract(campaignId);
+  if (!existing) return null;
+  const setClauses: string[] = [];
+  const params: (string | number | null)[] = [];
+  for (const [k, v] of Object.entries(patch)) {
+    setClauses.push(`${k} = ?`);
+    params.push(v as string | number | null);
+  }
+  if (setClauses.length === 0) return existing;
+  setClauses.push("updated_at = ?");
+  params.push(Date.now());
+  params.push(campaignId);
+  getDb()
+    .prepare(
+      `UPDATE campaign_contracts SET ${setClauses.join(", ")} WHERE campaign_id = ?`
+    )
+    .run(...params);
+  return getCampaignContract(campaignId);
+}
+
+export function listOpenCampaignContracts(): CampaignContractRow[] {
+  return getDb()
+    .prepare(
+      `SELECT * FROM campaign_contracts WHERE on_chain_state IN ('open','funded','repaying') ORDER BY updated_at DESC`
+    )
+    .all() as CampaignContractRow[];
+}
+
+export function listCampaignContractsByIds(
+  campaignIds: string[]
+): Map<string, CampaignContractRow> {
+  if (campaignIds.length === 0) return new Map();
+  const placeholders = campaignIds.map(() => "?").join(",");
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM campaign_contracts WHERE campaign_id IN (${placeholders})`
+    )
+    .all(...campaignIds) as CampaignContractRow[];
+  return new Map(rows.map((r) => [r.campaign_id, r]));
+}
+
+export type CommitmentStatus =
+  | "committed"
+  | "refunded"
+  | "repaid_partial"
+  | "repaid";
+
+export type CommitmentRow = {
+  id: string;
+  campaign_id: string;
+  investor_user_id: string;
+  investor_address: string;
+  amount_eur: number;
+  tx_hash: string;
+  status: CommitmentStatus;
+  repaid_amount_eur: number;
+  committed_at: number;
+  updated_at: number;
+};
+
+export type CreateCommitmentInput = {
+  id?: string;
+  campaign_id: string;
+  investor_user_id: string;
+  investor_address: string;
+  amount_eur: number;
+  tx_hash: string;
+};
+
+export function insertCommitment(
+  data: CreateCommitmentInput
+): CommitmentRow {
+  const id = data.id ?? randomUUID();
+  const now = Date.now();
+  getDb()
+    .prepare(
+      `INSERT INTO commitments (
+        id, campaign_id, investor_user_id, investor_address,
+        amount_eur, tx_hash, status, repaid_amount_eur,
+        committed_at, updated_at
+      ) VALUES (
+        @id, @campaign_id, @investor_user_id, @investor_address,
+        @amount_eur, @tx_hash, 'committed', 0,
+        @now, @now
+      )`
+    )
+    .run({ ...data, id, now });
+  return getCommitmentById(id)!;
+}
+
+export function getCommitmentById(id: string): CommitmentRow | null {
+  return (
+    (getDb()
+      .prepare("SELECT * FROM commitments WHERE id = ?")
+      .get(id) as CommitmentRow | undefined) ?? null
+  );
+}
+
+export function listCommitmentsByCampaign(campaignId: string): CommitmentRow[] {
+  return getDb()
+    .prepare(
+      "SELECT * FROM commitments WHERE campaign_id = ? ORDER BY committed_at ASC"
+    )
+    .all(campaignId) as CommitmentRow[];
+}
+
+export function listCommitmentsByInvestor(
+  investorUserId: string
+): CommitmentRow[] {
+  return getDb()
+    .prepare(
+      "SELECT * FROM commitments WHERE investor_user_id = ? ORDER BY committed_at DESC"
+    )
+    .all(investorUserId) as CommitmentRow[];
+}
+
+export function updateCommitment(
+  id: string,
+  patch: Partial<Pick<CommitmentRow, "status" | "repaid_amount_eur">>
+): void {
+  const setClauses: string[] = [];
+  const params: (string | number)[] = [];
+  for (const [k, v] of Object.entries(patch)) {
+    setClauses.push(`${k} = ?`);
+    params.push(v as string | number);
+  }
+  if (setClauses.length === 0) return;
+  setClauses.push("updated_at = ?");
+  params.push(Date.now());
+  params.push(id);
+  getDb()
+    .prepare(`UPDATE commitments SET ${setClauses.join(", ")} WHERE id = ?`)
+    .run(...params);
+}
+
+export type ChainEventKind =
+  | "CampaignCreated"
+  | "Committed"
+  | "Funded"
+  | "RepaymentReceived"
+  | "InvestorPaid"
+  | "InvestorRefunded"
+  | "Repaid"
+  | "Cancelled";
+
+export type ChainEventRow = {
+  id: number;
+  campaign_id: string;
+  kind: ChainEventKind;
+  tx_hash: string;
+  block_number: number;
+  log_index: number;
+  args_json: string;
+  ts: number;
+};
+
+export function insertChainEvent(opts: {
+  campaignId: string;
+  kind: ChainEventKind;
+  txHash: string;
+  blockNumber: number;
+  logIndex?: number;
+  args: unknown;
+  ts?: number;
+}): void {
+  try {
+    getDb()
+      .prepare(
+        `INSERT INTO chain_events (campaign_id, kind, tx_hash, block_number, log_index, args_json, ts)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        opts.campaignId,
+        opts.kind,
+        opts.txHash,
+        opts.blockNumber,
+        opts.logIndex ?? 0,
+        JSON.stringify(opts.args ?? {}),
+        opts.ts ?? Date.now()
+      );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/UNIQUE constraint failed/i.test(msg)) throw e;
+  }
+}
+
+export function listChainEventsByCampaign(
+  campaignId: string,
+  limit = 50
+): ChainEventRow[] {
+  return getDb()
+    .prepare(
+      "SELECT * FROM chain_events WHERE campaign_id = ? ORDER BY ts ASC, id ASC LIMIT ?"
+    )
+    .all(campaignId, limit) as ChainEventRow[];
 }

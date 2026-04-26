@@ -2,41 +2,31 @@
 
 **AI-native marketplace for European SMBs and thesis-driven investors.**
 
-> Capital, finally routed to Europe's real economy.
-
-Built at the **Paris Fintech Hackathon 2026** in 24 hours. Mistral Large 2 + Cerebras fallback, Vercel AI SDK, Tavily, SIRENE, Clerk, SQLite.
-
-Live demo and submission: see the [Devpost section](#devpost-submission-copy) below.
+Built at the **Paris Fintech Hackathon 2026** in 24 hours.
 
 ---
 
-## Why this exists
+## What it does
 
-AngelList serves US tech startups doing venture rounds — **the 1%**. The other 25 million European SMBs (agencies, B2B services, makers, manufacturers) raise €50k–500k tickets from regional angels, family offices and search funds, and they have nowhere to go.
+A two-sided marketplace where:
 
-Three structural bets:
-
-1. **Audience AngelList won't pivot to** — non-tech European SMBs at the long tail of capital.
-2. **Fractionalisation for big-ticket capital** — a family office can't deploy €2M across 30 SMBs without 50 hours of analyst work. Our AI does it in seconds.
-3. **AI as the product, not decoration** — without LLMs, the four core features collapse.
+- **Founders** onboard through a 5-turn AI conversation (no 50-field form), spin up multiple companies and campaigns, and raise capital on-chain.
+- **Investors** describe their thesis in plain language, get a curated ranked feed of European SMBs, run AI due diligence on any deal in seconds, and let the platform construct a fractionalised portfolio across 10–20 picks.
+- **Capital actually moves** — each campaign deploys a real Solidity escrow on a local EVM. Investors commit mock-EURC, the contract auto-disburses to the SMB at target, and pro-rata principal+interest is paid back on repayment. Custodial wallets per Clerk user, zero crypto knowledge required.
 
 ---
 
-## What's in the box
+## Key features
 
 | # | Feature | What it does |
 |---|---|---|
-| 1 | **Conversational SMB onboarding** | Replaces a 50-field form with a 5-turn chat. The AI structures everything live (right pane materialises while you type or talk). |
-| 2 | **AI due-diligence agent** | Investor opens a deal → tool-calling agent (Tavily web search · page fetch · SIRENE registry) produces an analyst-style brief with risk flags and **real cited URLs**. Tool trace streams to the UI as it runs. |
-| 3 | **AI portfolio constructor** | Investor describes capital + risk + sectors → SQL hard-filter → rule-based fit-score → Mistral re-ranks and allocates. Sector donut, per-pick rationale, in <20s. |
-| 4 | **Live thesis matching** | Investor's thesis → top-N ranked deals streamed in with one-line reasoning per pick. Cached per investor, refreshed on every thesis edit. |
-
-Plus, beyond the original spec:
-
-- **Multi-company / multi-campaign** — one founder owns N companies, each with N campaigns.
-- **Collateral upload + AI proof check** — upload a PDF, the AI extracts text, verifies the founder's claim, scores plausibility 0–100, and surfaces concrete red flags. Six fixtures with pre-baked verdicts ship in the seed (real PDFs in `data/uploads/`).
-- **Natural-language + voice filters** — type or hit the mic (Web Speech API), the parser turns it into structured filters.
-- **Bidirectional ratings** — Airbnb-style trust layer with named dimensions (responsiveness, info quality).
+| 1 | **Conversational SMB onboarding** | 5-turn chat extracts company, traction, and campaign details; right pane materialises the structured profile live. |
+| 2 | **AI due-diligence agent** | Tool-calling agent (Tavily web search · page fetch · SIRENE registry) produces an analyst-style brief with risk flags and **real cited URLs**. Tool trace streams to the UI as it runs. |
+| 3 | **AI portfolio constructor** | Capital + risk + sectors → SQL hard-filter → fit-score → Mistral re-ranks and allocates. Sector donut, per-pick rationale, in <20s. |
+| 4 | **Live thesis matching** | Top-N ranked deals with one-line reasoning per pick. Cached per investor, refreshed on thesis edit. |
+| 5 | **On-chain contract lifecycle** | Per-campaign Solidity escrow on a local Hardhat node. End-to-end: deploy → commit → auto-fund → pro-rata repay. Every event indexed in SQLite and rendered in a per-campaign timeline. |
+| 6 | **Collateral upload + AI verification** | Upload a PDF → text extraction → AI verifies the founder's claim, scores plausibility 0–100, surfaces concrete red flags. |
+| 7 | **Bidirectional ratings** | Airbnb-style trust layer with named dimensions (responsiveness, info quality). |
 
 ---
 
@@ -48,12 +38,9 @@ Plus, beyond the original spec:
 | Backend | Next.js API routes (Node runtime) |
 | DB | SQLite via `better-sqlite3` |
 | Auth | Clerk |
-| AI | **Mistral Large 2** via Vercel AI SDK v6 (`@ai-sdk/mistral`) |
-| AI fallback | **Cerebras Llama 3.3 70B** — automatic on Mistral failure |
-| Web search | Tavily (`@tavily/core`) |
-| FR registry | SIRENE V3.11 (INSEE) |
-| PDF parsing | `pdf-parse` v2 |
-| Schema validation | Zod |
+| AI | Mistral Large 2 (primary) · Cerebras Llama 3.3 70B (automatic fallback) via Vercel AI SDK v6 |
+| Web search | Tavily · SIRENE V3.11 (FR registry) · `pdf-parse` |
+| On-chain | Solidity 0.8.24 · Hardhat (compile + local node) · viem · custodial wallets (AES-256-GCM at rest) · mock EURC ERC-20 |
 
 ---
 
@@ -65,22 +52,26 @@ pnpm install
 
 # 2. env
 cp .env.example .env.local
-# fill in: CLERK keys, MISTRAL_API_KEY, TAVILY_API_KEY
-# optional: CEREBRAS_API_KEY, SIRENE_API_TOKEN
+# fill in CLERK keys, MISTRAL_API_KEY, TAVILY_API_KEY
+# (CEREBRAS_API_KEY and SIRENE_API_TOKEN are optional)
 
-# 3. db + seed (20 companies, 20 campaigns, 5 investors,
-#    6 collaterals with real PDFs and pre-cached AI verdicts)
+# 3. database (schema + 20 companies / 20 campaigns / 5 investors / 6 collaterals with real PDFs)
 pnpm db:reset
 pnpm db:seed
 
-# 4. (optional) pre-cache hero DD briefs so they load instantly
-pnpm exec tsx --env-file=.env.local scripts/precache-dd.ts
+# 4. on-chain (real EVM, no real money — local Hardhat node + mock EURC)
+pnpm chain:compile          # one-time, generates contracts/artifacts/
+pnpm chain:node             # terminal A — keeps the local EVM running
+pnpm chain:deploy           # terminal B — deploys MockEUR + LoanlyMarketplace,
+                            # writes data/chain.json
 
 # 5. dev server
-pnpm dev   # → http://localhost:3000
+pnpm dev                    # http://localhost:3000
 ```
 
-### Required env (`.env.local`)
+If you restart the Hardhat node, run `pnpm chain:reset` to wipe stale wallet/contract/event rows and redeploy.
+
+### Required env vars
 
 ```bash
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
@@ -88,55 +79,47 @@ CLERK_SECRET_KEY=sk_...
 MISTRAL_API_KEY=...
 TAVILY_API_KEY=tvly-...
 
-# optional but recommended
+# optional
 CEREBRAS_API_KEY=csk-...
-SIRENE_API_TOKEN=...   # https://portail-api.insee.fr/
+SIRENE_API_TOKEN=...
+
+# chain (defaults work out of the box against the local Hardhat node)
+RPC_URL=http://127.0.0.1:8545
+CHAIN_ID=31337
+OPERATOR_PRIVATE_KEY=0xac09...ff80    # Hardhat dev account #0
+OPERATOR_ENCRYPTION_KEY=0x4c6f616e6c79446576456e6372797074696f6e4b657931323334353637383930
 ```
 
 ### Scripts
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Next.js dev server with hot reload |
-| `pnpm build` | Production build |
-| `pnpm start` | Run the production build |
-| `pnpm db:bootstrap` | Create the SQLite schema (idempotent) |
-| `pnpm db:reset` | Wipe `data/hack.db` and re-bootstrap |
-| `pnpm db:seed` | Wipe seed rows, re-seed companies + campaigns + collaterals (with real PDFs) |
+| `pnpm dev` / `pnpm build` / `pnpm start` | Next.js dev / production build / serve |
+| `pnpm db:bootstrap` · `pnpm db:reset` · `pnpm db:seed` | Schema · wipe+rebuild · re-seed fixtures |
+| `pnpm chain:compile` · `pnpm chain:node` · `pnpm chain:deploy` · `pnpm chain:reset` | Compile contracts · run local EVM · deploy · wipe+redeploy |
+| `pnpm chain:e2e` | End-to-end on-chain lifecycle test (deploy → 2 commits → auto-fund → repay → assert pro-rata payouts) |
+| `pnpm chain:scenarios` | Edge-case scenarios: cancel+refund, partial repay, repeat-commit |
 | `pnpm exec tsc --noEmit` | Type-check the whole project |
 
 ---
 
-## The 3-minute demo
+## How the on-chain layer works
 
-Every product decision is in service of these three minutes.
+`contracts/LoanlyMarketplace.sol` is a single factory + escrow contract. Each campaign is a struct keyed by `keccak256(uuid)` with state machine `Open → Funded → Repaying → Repaid` (plus `Cancelled` from `Open`).
 
-### 1. As an **investor** — set the thesis (15s)
-- Land on `/matches`. The thesis editor is at the top — chat-bar style.
-- Click the mic, say:
-  > *"I want profitable European B2B SaaS and agencies in France and Benelux. Tickets 100k to 500k euros, low risk."*
-- Hit submit. The "AI applied" chip shows the parsed structure.
+- **Custodial wallets** — every Clerk user gets a server-managed EVM wallet, private key encrypted with AES-256-GCM. Investors are auto-funded with €1,000,000 mock EURC; SMBs receive funds when their target is hit.
+- **Auto-fund** — `commit` checks if `totalCommitted == target` and immediately disburses the escrow to the borrower in the same tx.
+- **Pro-rata repay** — `repay` splits the amount across investors weighted by their commitment; the last investor absorbs integer-division dust so no funds are stranded.
+- **Cancellation** — borrower or operator can cancel an `Open` campaign and `_refundAll` reverses every commitment.
 
-### 2. **Matches stream in** (5s)
-- The same screen now ranks 200+ live campaigns and streams the top 10 in with a fit-score badge and one-line reasoning per pick.
+Backend reconciles on-chain state into SQLite (`campaign_contracts`, `commitments`, `chain_events`) on every API write and on every contract read, so the UI always shows live numbers. Status, totals, and the per-campaign timeline you see in the UI all come from indexed events.
 
-### 3. **DD agent on a hero deal** (3s — Wow #1)
-- Click `Atelier Paris Coffee Roasters → Lyon roastery + B2B sales team`.
-- The brief loads instantly (cached). Sentiment ring, overview, traction, team, risk flags, and **real cited URLs** (LinkedIn profiles, the company website, an `annuaire-entreprises.data.gouv.fr` registry link, Tavily news hits).
-- Run it on a non-cached SMB to watch the live tool trace: `webSearch → fetchUrl → companyLookup → structure`.
+### The 3-minute demo
 
-### 4. **Build a portfolio** (6s — Wow #2)
-- `/portfolio`. Mic or paste:
-  > *"Two million euros across French B2B SaaS and agencies. Low risk, 12 positions."*
-- 6 seconds later: holdings table with allocations, sector donut, per-pick rationale.
-
-### 5. As an **SMB founder** — onboard (45s — Wow #3)
-- Sign out, sign in as SMB, hit `/onboard`. Five turns of conversation, the right pane fills in real time.
-
-### 6. **Trust + collateral verification** (15s)
-- On any hero deal, scroll to **Collateral**. Six fixtures across the seeded companies show the AI verdict: matches-claim badge, plausibility, red flags. Each fixture is a real PDF — try downloading and re-uploading on the manage screen.
-
-**Total: ~3 minutes. Six wow beats. AI on every step.**
+1. **SMB creates a campaign** with a target of e.g. €100,000, then clicks **Initiate on-chain contract** (8% interest, 90 days, 30-day commit deadline). Real Solidity is deployed; tx hash appears.
+2. **Investor A** opens the same campaign — wallet pill in the top nav shows €1,000,000 mock EURC. Click **Commit** with €40,000. Progress bar updates, timeline gains an event.
+3. **Investor B** commits the remaining €60,000 → contract **auto-disburses** the full €100k to the SMB in the same tx. Status flips to **Funded**.
+4. **SMB clicks Repay** → contract pushes pro-rata principal+interest. Status flips to **Repaid**, both investors see realised return on `/portfolio`. Full timeline visible: `Created → Committed × 2 → Funded → InvestorPaid × 2 → Repaid`.
 
 ---
 
@@ -148,152 +131,58 @@ Every product decision is in service of these three minutes.
 │                            │ ──────▶ │  • Server components (DB)    │
 │                            │         │  • Streaming API routes      │
 │                            │         │  • Role-aware middleware     │
-└────────────────────────────┘         └──────┬───────────┬───────────┘
-                                              │           │
-                                              ▼           ▼
-                                  ┌───────────────┐  ┌─────────────────┐
-                                  │ SQLite        │  │  Mistral Large  │
-                                  │ 12 tables     │  │  + Cerebras     │
-                                  │               │  │    fallback     │
-                                  └───────────────┘  └────┬────────────┘
-                                                          │
-                                          ┌───────────────┼─────────────────┐
-                                          ▼               ▼                 ▼
-                                     Tavily          fetchUrl         SIRENE V3
-                                  (web search)      (HTTP+50KB)     (FR registry)
+└────────────────────────────┘         └──────┬──────────┬────────────┘
+                                              │          │
+                            ┌─────────────────┘          └──────────────┐
+                            ▼                ▼                          ▼
+                  ┌────────────────┐  ┌──────────────────┐   ┌────────────────────┐
+                  │  SQLite        │  │  Mistral Large 2 │   │  Hardhat EVM       │
+                  │  16 tables     │  │  + Cerebras      │   │  • LoanlyMarketplace│
+                  │  (incl. chain  │  │  fallback        │   │  • MockEUR ERC-20  │
+                  │  cache)        │  └──────┬───────────┘   │  • viem TS client  │
+                  └────────────────┘         │               └────────────────────┘
+                                             ▼
+                                Tavily · SIRENE · fetchUrl · pdf-parse
 ```
-
-### Routing groups
-
-- `app/(smb)/*` — SMB-only (`/dashboard`, `/onboard`)
-- `app/(investor)/*` — investor-only (`/feed`, `/matches`, `/portfolio`)
-- `app/campaign/[id]`, `app/company/[id]` — both roles
-- `app/api/*` — gated by `middleware.ts`
 
 ### Data model
 
-- **users** — Clerk-linked, role + display name
-- **companies** — name, sector, country, traction, pitch, website (1 founder → N companies)
-- **campaigns** — title, capital_seeking, use_of_funds, status `open` | `closed` | `funded`
-- **collaterals** — type, declared_value, document_url, ai_score, ai_verdict_json
-- **investors** — thesis text + structured (sectors, countries, stages, ticket range, risk)
-- **dd_briefs**, **portfolio_proposals**, **match_caches** — cached AI outputs
-- **ratings** — bidirectional 1–5 stars + named dimensions
-- **conversations**, **onboarding_profiles** — onboarding transcripts and progress
-- **interactions** — read-receipt-style logs
+- **users · companies · campaigns** — Clerk-linked founder profiles, multi-company support, status `open` | `closed` | `funded`.
+- **collaterals** — type, declared value, document URL, AI score + verdict.
+- **investors · dd_briefs · portfolio_proposals · match_caches** — thesis + cached AI outputs.
+- **wallets** — Clerk user → EVM address + AES-256-GCM encrypted private key (custodial, lazy-provisioned).
+- **campaign_contracts** — on-chain terms cache (target, interest_bps, duration, deadline, totals, `on_chain_state`).
+- **commitments** — investor stakes (amount, tx hash, status, repaid amount).
+- **chain_events** — append-only audit log of every emitted event, powers the timeline UI.
+- **ratings · interactions · conversations · onboarding_profiles** — trust + transcripts.
 
----
-
-## API surface
+### API surface (selection)
 
 | Method · Path | Purpose | Auth |
 |---|---|---|
-| `POST /api/smb/onboard` | Streaming onboarding chat | SMB |
-| `POST /api/smb/extract` | Mid-chat partial extraction | SMB |
-| `POST /api/smb/finalize` | Write company + first campaign from transcript | SMB |
-| `POST /api/company/[id]/campaigns` | Add another campaign | SMB owner |
-| `GET /api/company/[id]/dd` | Cached or fresh DD brief | Investor |
-| `GET /api/company/[id]/dd/stream` | Live agent trace + brief | Investor |
+| `POST /api/smb/onboard` · `extract` · `finalize` | Streaming onboarding chat + finalise | SMB |
+| `GET /api/company/[id]/dd` · `dd/stream` | Cached or live AI due diligence | Investor |
 | `POST /api/campaign/[id]/collateral` | Upload + AI verify a PDF | SMB owner |
-| `GET /api/uploads/[name]` | Auth-gated file serving | Either |
-| `POST /api/investor/thesis` | Save thesis | Investor |
-| `POST /api/investor/portfolio` | Run portfolio constructor | Investor |
-| `GET /api/match` · `/api/match/stream` | Curated feed + live ranking | Investor |
-| `POST /api/parse-query` | Natural language → structured filters | Either |
-| `POST /api/rate` | Submit a rating | Either |
+| `POST /api/investor/thesis` · `portfolio` | Save thesis · run portfolio constructor | Investor |
+| `GET /api/match` · `match/stream` | Curated feed + live ranking | Investor |
+| `GET /api/chain/wallet` | Custodial wallet `{ address, balanceEur, balanceEth }` | Either |
+| `GET · POST /api/campaign/[id]/contract` | Read terms+commitments+events · SMB initiates | Either · SMB |
+| `POST /api/campaign/[id]/commit` · `repay` · `cancel` | Investor commits · SMB repays · SMB cancels | Investor · SMB · SMB |
 
 ---
 
 ## Reliability posture
 
-- **Temperature 0** for every structured-output call. Higher only on the conversational onboarding chat.
+- **Temperature 0** for every structured-output call.
 - **Zod-validates every LLM JSON output** with one retry on schema failure.
-- **Cerebras Llama 3.3 70B fallback** on Mistral failure — wired across all demo-critical paths via `lib/ai/client.ts:withModelFallback`.
-- **Cached results in DB** for DD briefs, portfolio proposals, and match results — a flaky network never breaks the demo.
-- **Hero DD briefs pre-generated** with `scripts/precache-dd.ts`.
-- **Pre-baked collateral verdicts** in the seed — six fixtures show the AI verifier output without burning a live LLM call to load the page.
+- **Cerebras fallback** wired across all demo-critical paths.
+- **Cached results in DB** for DD briefs, portfolio proposals, and match results.
+- **Pre-baked collateral verdicts** in the seed (no live LLM call needed to load demo pages).
+- **Pre-cached hero DD briefs** via `pnpm exec tsx --env-file=.env.local scripts/precache-dd.ts`.
 
 ---
 
-## Out of MVP — explicitly deferred
+## Out of MVP
 
-- Real escrow / capital flow
-- Smart contracts / on-chain anything
-- Email notifications, weekly digests
-- Real-time investor↔SMB chat
-- Investor accreditation checks
-- Mobile responsiveness past basic
-
----
-
-## Devpost submission copy
-
-**Title** — Loanly: AI-native marketplace for European SMBs and thesis-driven investors
-
-**Tagline** *(≤200 chars)* — Mistral-powered marketplace matching non-tech European SMBs raising capital with the right investors. AI handles sourcing, due diligence, portfolio construction, and collateral verification.
-
-**Tech tags** — `Mistral AI` · `Vercel AI SDK` · `Next.js 15` · `Tailwind v4` · `shadcn/ui` · `Clerk` · `SQLite` · `Tavily` · `SIRENE / INSEE` · `Cerebras` · `Zod` · `TypeScript`
-
-**Inspiration** — 25 million European SMBs are economic engines invisible to AngelList — agencies, makers, manufacturers, B2B services. They raise €50k–500k tickets from regional angels and family offices, who themselves can't deploy at scale without 50 hours of analyst work per deal. AI changes that economics.
-
-**What it does** — Loanly is a two-sided marketplace where founders onboard via a conversation (no 50-field form), each deal ships with an AI-generated DD brief sourced from web + registry + the company's own site, big-ticket investors get fractionalised portfolios across 10–20 SMBs in seconds, and uploaded collateral PDFs are automatically verified.
-
-**How we built it** — Next.js 15 App Router, Vercel AI SDK v6 with Mistral Large 2 (Cerebras Llama 3.3 70B as automatic fallback), tool-calling agent for DD with Tavily web search and SIRENE registry, Zod-validated structured outputs everywhere, SQLite for everything, Clerk for auth, shadcn/ui for the polish.
-
-**Challenges** — Schema migration mid-build to support multi-company + multi-campaign + collaterals; live-streaming the DD agent's tool calls and the matching ranker's intermediate output; making the agent cite real URLs (not bare domains) by extracting them from research steps and pinning them to the structuring prompt.
-
-**Accomplishments** — All four AI features built end-to-end in 24h plus an entire collateral verification subsystem (PDF parse → Mistral verdict). Every wow moment in the demo path is under 5 seconds, including the freshly-streamed DD agent visibly searching, fetching, and registry-checking before structuring its findings.
-
-**What's next** — Real-time investor↔SMB messaging, escrow integration, multi-country registry coverage (Companies House UK, Handelsregister DE, RC Spain), audit trail for AI-assisted decisions, weekly thesis-aware digest emails.
-
----
-
-## Repo structure
-
-```
-loanly/
-├── app/
-│   ├── layout.tsx                       # Clerk provider, fonts
-│   ├── page.tsx                         # Landing
-│   ├── icon.svg                         # Favicon
-│   ├── (smb)/                           # SMB-only group
-│   │   ├── dashboard/page.tsx
-│   │   └── onboard/                     # Conversational onboarding
-│   ├── (investor)/                      # Investor-only group
-│   │   ├── feed/                        # Browse open campaigns
-│   │   ├── matches/                     # Thesis editor + ranked picks
-│   │   └── portfolio/                   # Constructor + sector donut
-│   ├── company/[id]/                    # Company profile
-│   │   └── new-campaign/                # Add a campaign
-│   ├── campaign/[id]/                   # Deal detail (DD + collateral + rate)
-│   │   └── manage/                      # Owner-only collateral upload
-│   ├── select-role/
-│   └── api/                             # Streaming + non-streaming routes
-├── lib/
-│   ├── db.ts                            # better-sqlite3 + helpers
-│   ├── auth.ts                          # Clerk + role gating
-│   ├── format.ts                        # EUR + humanize helpers
-│   ├── ai/                              # client, dd-analyst, match,
-│   │                                    # portfolio, parse-query,
-│   │                                    # onboarding-smb, collateral-verify
-│   └── tools/                           # web-search, fetch-url,
-│                                        # company-lookup, extract-pdf
-├── components/
-│   ├── ui/                              # Badge, Button, Card, SectorIcon
-│   ├── DDBrief.tsx, DDSection.tsx       # Live agent trace + brief view
-│   ├── PortfolioView.tsx                # Holdings + donut
-│   ├── FilterChips.tsx, NaturalLanguageInput.tsx
-│   ├── FeedFilters.tsx, RatingWidget.tsx, TopNav.tsx
-├── scripts/
-│   ├── db-bootstrap.ts                  # Schema only
-│   ├── db-seed.ts                       # Companies, campaigns, collaterals
-│   ├── _pdf.ts                          # Dependency-free PDF generator
-│   └── precache-dd.ts                   # Hero DD pre-generation
-└── data/                                # SQLite + uploaded PDFs (gitignored)
-```
-
----
-
-## Acknowledgements
-
-Built on the shoulders of: **Mistral AI**, **Vercel AI SDK**, **Next.js**, **Clerk**, **Tavily**, **INSEE / SIRENE**, **Cerebras**, **shadcn/ui**, **Recharts**, **better-sqlite3**.
+- Public-testnet / mainnet deployment (we ship a local Hardhat node + mock EURC for the demo — no funds at risk).
+- Email notifications, real-time chat, investor accreditation checks, mobile responsiveness past basic.

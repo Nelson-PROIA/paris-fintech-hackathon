@@ -32,3 +32,11 @@ data/uploads/
 # clerk configuration (can include secrets)
 /.clerk/
 .claude/
+
+# hardhat — keep contract ABIs (lib/chain/abi.ts imports them) but
+# drop heavy build-info, debug files, and the per-deployment address map.
+contracts/cache/
+contracts/artifacts/build-info/
+contracts/artifacts/**/*.dbg.json
+data/chain.json
+

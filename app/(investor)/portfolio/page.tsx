@@ -1,7 +1,10 @@
 import { listCountries, listSectors } from "@/lib/db";
+import { requireRole } from "@/lib/auth";
 import { PortfolioClient } from "./PortfolioClient";
+import { ActiveCommitments } from "./ActiveCommitments";
 
 export default async function PortfolioPage() {
+  const user = await requireRole("investor");
   const allSectors = listSectors();
   const allCountries = listCountries();
 
@@ -20,6 +23,11 @@ export default async function PortfolioPage() {
           line of reasoning per position.
         </p>
       </header>
+
+      <div className="mb-8">
+        <ActiveCommitments userId={user.id} />
+      </div>
+
       <PortfolioClient allSectors={allSectors} allCountries={allCountries} />
     </main>
   );

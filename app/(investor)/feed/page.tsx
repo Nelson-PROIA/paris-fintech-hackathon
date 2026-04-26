@@ -1,9 +1,15 @@
 import Link from "next/link";
-import { listCampaigns, listSectors, listCountries } from "@/lib/db";
+import {
+  listCampaigns,
+  listCampaignContractsByIds,
+  listSectors,
+  listCountries,
+} from "@/lib/db";
 import { FeedFilters } from "@/components/FeedFilters";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { Badge } from "@/components/ui/badge";
 import { fmtEur, humanize } from "@/lib/format";
+import { CommitmentProgress } from "@/components/contract/CommitmentProgress";
 
 type SearchParams = {
   sector?: string | string[];
@@ -31,6 +37,7 @@ export default async function FeedPage({
   });
   const allSectors = listSectors();
   const allCountries = listCountries();
+  const contractsById = listCampaignContractsByIds(campaigns.map((c) => c.id));
 
   const isFiltered =
     sectors.length > 0 ||
@@ -86,22 +93,35 @@ export default async function FeedPage({
       <FeedFilters allSectors={allSectors} allCountries={allCountries} />
 
       <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {campaigns.map((c) => (
-          <li key={c.id}>
-            <DealCard
-              campaignId={c.id}
-              campaignTitle={c.title}
-              companyName={c.company.name}
-              sector={c.company.sector}
-              country={c.company.country}
-              stage={c.company.stage}
-              capitalSeeking={c.capital_seeking_eur}
-              pitch={c.pitch_summary ?? c.company.pitch}
-              ratingAvg={c.company.rating_avg}
-              ratingCount={c.company.rating_count}
-            />
-          </li>
-        ))}
+        {campaigns.map((c) => {
+          const contract = contractsById.get(c.id) ?? null;
+          return (
+            <li key={c.id}>
+              <DealCard
+                campaignId={c.id}
+                campaignTitle={c.title}
+                companyName={c.company.name}
+                sector={c.company.sector}
+                country={c.company.country}
+                stage={c.company.stage}
+                capitalSeeking={c.capital_seeking_eur}
+                pitch={c.pitch_summary ?? c.company.pitch}
+                ratingAvg={c.company.rating_avg}
+                ratingCount={c.company.rating_count}
+                contract={
+                  contract
+                    ? {
+                        committedEur: contract.total_committed_eur,
+                        targetEur: contract.target_eur,
+                        state: contract.on_chain_state,
+                        interestBps: contract.interest_bps,
+                      }
+                    : null
+                }
+              />
+            </li>
+          );
+        })}
       </ul>
       {campaigns.length === 0 && (
         <div className="mt-12 flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-12 text-center">
@@ -136,6 +156,7 @@ function DealCard({
   pitch,
   ratingAvg,
   ratingCount,
+  contract,
 }: {
   campaignId: string;
   campaignTitle: string;
@@ -147,7 +168,30 @@ function DealCard({
   pitch: string | null;
   ratingAvg: number;
   ratingCount: number;
+  contract: {
+    committedEur: number;
+    targetEur: number;
+    state: "open" | "funded" | "repaying" | "repaid" | "cancelled";
+    interestBps: number;
+  } | null;
 }) {
+  const stateLabel: Record<NonNullable<typeof contract>["state"], string> = {
+    open: "Open",
+    funded: "Funded",
+    repaying: "Repaying",
+    repaid: "Repaid",
+    cancelled: "Cancelled",
+  };
+  const stateBadge: Record<
+    NonNullable<typeof contract>["state"],
+    "success" | "brand" | "warning" | "danger" | "default"
+  > = {
+    open: "success",
+    funded: "brand",
+    repaying: "warning",
+    repaid: "default",
+    cancelled: "danger",
+  };
   return (
     <Link
       href={`/campaign/${campaignId}`}
@@ -180,16 +224,31 @@ function DealCard({
       <div className="flex flex-wrap gap-1.5">
         {sector && <Badge variant="brand">{humanize(sector)}</Badge>}
         {stage && <Badge>{humanize(stage)}</Badge>}
+        {contract && (
+          <Badge variant={stateBadge[contract.state]}>
+            {stateLabel[contract.state]}
+            {contract.interestBps > 0 &&
+              ` · ${(contract.interestBps / 100).toFixed(1)}%`}
+          </Badge>
+        )}
       </div>
 
-      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+      <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
         {pitch ?? "No description."}
       </p>
+
+      {contract && (
+        <CommitmentProgress
+          variant="inline"
+          target={contract.targetEur}
+          committed={contract.committedEur}
+        />
+      )}
 
       <div className="mt-auto flex items-end justify-between border-t border-border pt-3">
         <div>
           <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Seeking
+            {contract ? "Target" : "Seeking"}
           </div>
           <div className="mt-0.5 text-2xl font-semibold tabular-nums tracking-[-0.02em]">
             {fmtEur(capitalSeeking)}

@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { listCampaignsByCompany, listCompaniesByUserId } from "@/lib/db";
+import {
+  listCampaignContractsByIds,
+  listCampaignsByCompany,
+  listCompaniesByUserId,
+} from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
+import { CommitmentProgress } from "@/components/contract/CommitmentProgress";
 import { fmtEur, humanize } from "@/lib/format";
+import { computeOwedEur } from "@/lib/chain/marketplace";
 
 export default async function SMBDashboardPage() {
   const user = await requireRole("smb");
@@ -12,14 +18,38 @@ export default async function SMBDashboardPage() {
   const allCampaigns = companies.flatMap((co) =>
     listCampaignsByCompany(co.id).map((c) => ({ ...c, company: co }))
   );
-  const openCampaigns = allCampaigns.filter((c) => c.status === "open");
-  const fundedCampaigns = allCampaigns.filter((c) => c.status === "funded");
+  const contracts = listCampaignContractsByIds(allCampaigns.map((c) => c.id));
+
+  const openCampaigns = allCampaigns.filter((c) => {
+    const k = contracts.get(c.id);
+    return k ? k.on_chain_state === "open" : c.status === "open";
+  });
+  const fundedCampaigns = allCampaigns.filter((c) => {
+    const k = contracts.get(c.id);
+    return k
+      ? k.on_chain_state === "funded" || k.on_chain_state === "repaying"
+      : c.status === "funded";
+  });
   const seeking = openCampaigns.reduce(
     (s, c) => s + (c.capital_seeking_eur ?? 0),
     0
   );
   const raised = fundedCampaigns.reduce(
     (s, c) => s + (c.capital_seeking_eur ?? 0),
+    0
+  );
+
+  const outstandingRepay = allCampaigns.reduce((sum, camp) => {
+    const k = contracts.get(camp.id);
+    if (!k) return sum;
+    if (k.on_chain_state !== "funded" && k.on_chain_state !== "repaying") {
+      return sum;
+    }
+    const owed = computeOwedEur(k.target_eur, k.interest_bps);
+    return sum + Math.max(0, owed - k.total_repaid_eur);
+  }, 0);
+  const totalRepaid = Array.from(contracts.values()).reduce(
+    (s, k) => s + (k.total_repaid_eur ?? 0),
     0
   );
 
@@ -64,13 +94,14 @@ export default async function SMBDashboardPage() {
             tone="success"
           />
           <StatCard
-            label="Active campaigns"
-            value={openCampaigns.length.toString()}
+            label="Outstanding repayment"
+            value={fmtEur(outstandingRepay)}
             sub={
-              openCampaigns.length === 0
-                ? "none open"
-                : `${openCampaigns.length} on the desk`
+              totalRepaid > 0
+                ? `${fmtEur(totalRepaid)} repaid so far`
+                : "principal + interest owed"
             }
+            tone={outstandingRepay > 0 ? "warning" : undefined}
           />
           <StatCard
             label="Companies"
@@ -156,37 +187,85 @@ export default async function SMBDashboardPage() {
                     </p>
                   ) : (
                     <ul className="divide-y divide-border rounded-md border border-border">
-                      {campaigns.map((c) => (
-                        <li key={c.id}>
-                          <Link
-                            href={`/campaign/${c.id}`}
-                            className="flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-accent/50"
-                          >
-                            <span className="flex min-w-0 items-center gap-3">
-                              <StatusDot status={c.status} />
-                              <span className="truncate font-medium">
-                                {c.title}
-                              </span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                              <span className="font-semibold tabular-nums text-foreground">
-                                {fmtEur(c.capital_seeking_eur)}
-                              </span>
-                              <Badge
-                                variant={
-                                  c.status === "open"
-                                    ? "success"
-                                    : c.status === "funded"
-                                      ? "brand"
-                                      : "default"
-                                }
-                              >
-                                {humanize(c.status)}
-                              </Badge>
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
+                      {campaigns.map((c) => {
+                        const k = contracts.get(c.id) ?? null;
+                        const state = k?.on_chain_state ?? c.status;
+                        const owed = k
+                          ? computeOwedEur(k.target_eur, k.interest_bps)
+                          : 0;
+                        const repayPct =
+                          k && owed > 0
+                            ? Math.min(100, (k.total_repaid_eur / owed) * 100)
+                            : 0;
+                        return (
+                          <li key={c.id}>
+                            <Link
+                              href={`/campaign/${c.id}`}
+                              className="block px-4 py-3 text-sm transition hover:bg-accent/50"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="flex min-w-0 items-center gap-3">
+                                  <StatusDot status={state} />
+                                  <span className="truncate font-medium">
+                                    {c.title}
+                                  </span>
+                                </span>
+                                <span className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                                  <span className="font-semibold tabular-nums text-foreground">
+                                    {fmtEur(c.capital_seeking_eur)}
+                                  </span>
+                                  <Badge
+                                    variant={
+                                      state === "open"
+                                        ? "success"
+                                        : state === "funded"
+                                          ? "brand"
+                                          : state === "repaying"
+                                            ? "warning"
+                                            : state === "cancelled"
+                                              ? "danger"
+                                              : "default"
+                                    }
+                                  >
+                                    {humanize(state)}
+                                  </Badge>
+                                </span>
+                              </div>
+                              {k && k.on_chain_state === "open" && (
+                                <div className="mt-2">
+                                  <CommitmentProgress
+                                    variant="inline"
+                                    target={k.target_eur}
+                                    committed={k.total_committed_eur}
+                                  />
+                                </div>
+                              )}
+                              {k &&
+                                (k.on_chain_state === "funded" ||
+                                  k.on_chain_state === "repaying" ||
+                                  k.on_chain_state === "repaid") && (
+                                  <div className="mt-2 space-y-1">
+                                    <div className="flex items-center justify-between text-[11px] tabular-nums">
+                                      <span className="text-muted-foreground">
+                                        Repaid {fmtEur(k.total_repaid_eur)} /{" "}
+                                        {fmtEur(owed)}
+                                      </span>
+                                      <span className="text-muted-foreground">
+                                        {repayPct.toFixed(0)}%
+                                      </span>
+                                    </div>
+                                    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                                      <div
+                                        className="absolute inset-y-0 left-0 rounded-full bg-emerald-500 transition-[width] duration-300"
+                                        style={{ width: `${repayPct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                            </Link>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
@@ -208,17 +287,21 @@ function StatCard({
   label: string;
   value: string;
   sub?: string;
-  tone?: "success";
+  tone?: "success" | "warning";
 }) {
+  const valueTone =
+    tone === "success"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : tone === "warning"
+        ? "text-amber-600 dark:text-amber-400"
+        : "";
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
       <div
-        className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-[-0.02em] ${
-          tone === "success" ? "text-emerald-600 dark:text-emerald-400" : ""
-        }`}
+        className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-[-0.02em] ${valueTone}`}
       >
         {value}
       </div>
@@ -235,7 +318,11 @@ function StatusDot({ status }: { status: string }) {
       ? "bg-emerald-500"
       : status === "funded"
         ? "bg-brand"
-        : "bg-muted-foreground/40";
+        : status === "repaying"
+          ? "bg-amber-500"
+          : status === "cancelled"
+            ? "bg-rose-500"
+            : "bg-muted-foreground/40";
   return (
     <span
       className={`block h-2 w-2 shrink-0 rounded-full ${cls}`}
