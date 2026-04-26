@@ -160,20 +160,33 @@ export function CommitDialog({
                   <div className="mt-4 rounded-md border border-brand/30 bg-brand-muted/40 p-3 text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">
-                        Expected at maturity ({durationDays}d)
+                        Principal — what you commit now
                       </span>
                       <span className="font-semibold tabular-nums">
-                        {fmtEur(expectedReturn)}
+                        {fmtEur(numericAmount)}
                       </span>
                     </div>
                     <div className="mt-1 flex justify-between">
                       <span className="text-muted-foreground">
-                        Yield ({(interestBps / 100).toFixed(2)}%)
+                        Interest — your profit ({(interestBps / 100).toFixed(2)}% · {durationDays}d)
                       </span>
                       <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
                         +{fmtEur(netGain)}
                       </span>
                     </div>
+                    <div className="mt-2 flex justify-between border-t border-brand/30 pt-2">
+                      <span className="text-foreground">
+                        You receive at maturity
+                      </span>
+                      <span className="font-semibold tabular-nums">
+                        {fmtEur(expectedReturn)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                      Flat rate over the term, paid in mEURC when the borrower
+                      repays. Pro-rated to your share if multiple investors
+                      commit.
+                    </p>
                   </div>
                 )}
 

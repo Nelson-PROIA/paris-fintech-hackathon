@@ -84,7 +84,17 @@ export default async function MatchesPage() {
       </section>
 
       {hasThesis ? (
-        <MatchesClient cachedMatches={cachedMatches} cachedAt={cachedAt} />
+        <MatchesClient
+          cachedMatches={cachedMatches}
+          cachedAt={cachedAt}
+          activeThesis={{
+            sectors: initialThesis.sectors,
+            countries: initialThesis.countries,
+            ticketMinEur: initialThesis.ticketMinEur,
+            ticketMaxEur: initialThesis.ticketMaxEur,
+            riskTolerance: initialThesis.riskTolerance,
+          }}
+        />
       ) : (
         <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">

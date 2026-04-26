@@ -14,7 +14,8 @@
     "chain:deploy": "tsx --env-file=.env.local scripts/chain-deploy.ts",
     "chain:reset": "tsx --env-file=.env.local scripts/chain-reset.ts",
     "chain:e2e": "tsx --env-file=.env.local scripts/chain-e2e-demo.ts",
-    "chain:scenarios": "tsx --env-file=.env.local scripts/chain-e2e-scenarios.ts"
+    "chain:scenarios": "tsx --env-file=.env.local scripts/chain-e2e-scenarios.ts",
+    "chain:seed": "tsx --env-file=.env.local scripts/chain-seed.ts"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.45",

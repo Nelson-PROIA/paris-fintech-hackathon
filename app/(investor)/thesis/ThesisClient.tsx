@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FilterChips } from "@/components/FilterChips";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
@@ -51,6 +51,18 @@ export function ThesisClient({
   const [naturalText, setNaturalText] = useState("");
   const [parsedSummary, setParsedSummary] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Allow other panes (e.g. the empty-state CTA on /matches) to pop the filters
+  // drawer open without coupling them to this component's internals.
+  useEffect(() => {
+    function onOpenFilters() {
+      setFiltersOpen(true);
+    }
+    window.addEventListener("loanly:open-filters", onOpenFilters);
+    return () =>
+      window.removeEventListener("loanly:open-filters", onOpenFilters);
+  }, []);
+
   const [status, setStatus] = useState<
     "idle" | "parsing" | "saving" | "error"
   >("idle");

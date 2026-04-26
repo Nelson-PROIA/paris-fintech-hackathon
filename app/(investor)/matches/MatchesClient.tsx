@@ -7,6 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { fmtEur, humanize } from "@/lib/format";
 
+type ActiveThesis = {
+  sectors: string[];
+  countries: string[];
+  ticketMinEur: number | null;
+  ticketMaxEur: number | null;
+  riskTolerance: "low" | "medium" | "high";
+};
+
 type Stage = {
   id: string;
   label: string;
@@ -23,9 +31,11 @@ const INITIAL_STAGES: Stage[] = [
 export function MatchesClient({
   cachedMatches,
   cachedAt,
+  activeThesis,
 }: {
   cachedMatches: MatchedItemHydrated[];
   cachedAt: number | null;
+  activeThesis: ActiveThesis;
 }) {
   const [showCache, setShowCache] = useState(cachedMatches.length > 0);
   const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
@@ -175,19 +185,115 @@ export function MatchesClient({
       )}
       <MatchList matches={matches} animate />
       {status === "done" && matches.length === 0 && (
+        <EmptyState
+          activeThesis={activeThesis}
+          onEdit={openFiltersDrawer}
+          onRetry={regenerate}
+        />
+      )}
+      {status === "error" && (
         <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-10 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            No results
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-rose-600 dark:text-rose-400">
+            Match failed
           </span>
-          <p className="text-base font-semibold">
-            No matches passed the bar this run.
+          <p className="text-sm text-muted-foreground">
+            Something went wrong while ranking. Try again.
           </p>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Try widening sectors or countries in your thesis above.
-          </p>
+          <button
+            type="button"
+            onClick={regenerate}
+            className="mt-1 rounded-md bg-foreground px-4 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+          >
+            Re-run match
+          </button>
         </div>
       )}
     </>
+  );
+}
+
+function openFiltersDrawer() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("loanly:open-filters"));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function EmptyState({
+  activeThesis,
+  onEdit,
+  onRetry,
+}: {
+  activeThesis: ActiveThesis;
+  onEdit: () => void;
+  onRetry: () => void;
+}) {
+  const chips: string[] = [];
+  if (activeThesis.countries.length > 0)
+    chips.push(activeThesis.countries.join(" · "));
+  if (activeThesis.sectors.length > 0)
+    chips.push(activeThesis.sectors.map(humanize).join(" · "));
+  if (activeThesis.ticketMinEur != null || activeThesis.ticketMaxEur != null) {
+    const lo = activeThesis.ticketMinEur ?? 0;
+    const hi = activeThesis.ticketMaxEur;
+    chips.push(
+      hi == null ? `≥ ${fmtEur(lo)}` : `${fmtEur(lo)} – ${fmtEur(hi)}`
+    );
+  }
+  if (activeThesis.riskTolerance && activeThesis.riskTolerance !== "medium")
+    chips.push(`${activeThesis.riskTolerance} risk`);
+
+  return (
+    <div className="mt-8 flex flex-col items-center gap-4 rounded-xl border border-border bg-card p-10 text-center">
+      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        No results
+      </span>
+      <p className="text-base font-semibold">
+        No matches passed the bar this run.
+      </p>
+      {chips.length > 0 ? (
+        <div className="flex max-w-md flex-col items-center gap-2">
+          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+            Filtering by
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {chips.map((chip) => (
+              <Badge key={chip} variant="outline" className="font-normal">
+                {chip}
+              </Badge>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Widen one of these to surface more deals.
+          </p>
+        </div>
+      ) : (
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Set a thesis above to start ranking.
+        </p>
+      )}
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-md bg-foreground px-4 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+        >
+          Edit thesis
+        </button>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-md border border-border bg-card px-4 py-1.5 text-xs font-semibold transition hover:bg-accent"
+        >
+          Re-run match
+        </button>
+        <Link
+          href="/feed"
+          className="rounded-md border border-border bg-card px-4 py-1.5 text-xs font-semibold transition hover:bg-accent"
+        >
+          Browse all deals
+        </Link>
+      </div>
+    </div>
   );
 }
 
