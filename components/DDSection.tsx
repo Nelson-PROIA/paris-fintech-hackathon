@@ -299,9 +299,16 @@ function AgentLog({
                       </div>
                     </li>
                   ))}
-                  {streaming && events.every((e) => e.state === "done") && (
+                  {streaming &&
+                    events.length > 0 &&
+                    events.every((e) => e.state === "done") && (
+                      <li className="text-[11px] text-muted-foreground italic">
+                        thinking about next step…
+                      </li>
+                    )}
+                  {streaming && events.length === 0 && (
                     <li className="text-[11px] text-muted-foreground italic">
-                      thinking about next step…
+                      planning queries…
                     </li>
                   )}
                 </ul>

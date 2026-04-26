@@ -59,37 +59,23 @@ export const DDBriefSchema = z.object({
 
 export type DDBrief = z.infer<typeof DDBriefSchema>;
 
-const AGENT_SYSTEM_PROMPT = `You are a senior investment analyst preparing a one-page due-diligence brief on a small business for a busy investor.
+const AGENT_SYSTEM_PROMPT = `You are a senior investment analyst preparing a due-diligence brief on a small business. CALL TOOLS, then write notes — do NOT write notes first.
 
 Tools:
-- webSearch(query): Tavily public web search. Returns up to 5 hits with URLs and content excerpts. ALWAYS read the snippets — if they look relevant, fetchUrl the most promising URL.
-- fetchUrl(url): fetch HTML and return stripped text (50KB cap). Use this on the company's own website AND on the most promising search hits.
-- companyLookup(name, country): SIRENE registry lookup (French companies only).
+- webSearch(query): Tavily web search. Returns up to 5 hits with URLs + content excerpts.
+- fetchUrl(url): fetch a page (HTML stripped, 50KB cap). Use on the company website AND on the best webSearch hit.
+- companyLookup(name, country): SIRENE registry lookup (FR only).
 
-Search strategy — be precise, search like a human, never one-shot a generic name:
+REQUIRED first moves (do them in order, no preamble text):
+1. webSearch with the company name + a disambiguator from the brief (city, sector, or product) — e.g. "Petit Paquet logistique Bordeaux", NOT "Petit Paquet" alone.
+2. If a website is in the brief, fetchUrl it.
+3. If country is FR, companyLookup(name, "FR") once.
+4. After step 1, fetchUrl the single most promising webSearch URL.
+5. Optional: one more targeted webSearch (founder name, "site:linkedin.com", or a competitor angle).
 
-1. Build queries that disambiguate. The COMPANY NAME alone is almost never enough — it collides with everything (a "Petit Paquet" search hits Instagram bakeries). Always combine name + a disambiguator from the brief: city, sector keyword, founder name, product name, SIRET hint, or domain.
-   Good: "Petit Paquet logistique Bordeaux", "Boulangerie Martin SAS Lyon SIREN", "Lisbonne Data analytics Portugal".
-   Bad: "Petit Paquet", "Loanly".
+Stop after 4–7 useful tool calls. Don't repeat a failed query — vary it (synonym, drop a word, founder name).
 
-2. If the website is provided in the brief, fetchUrl it FIRST (before more searches) — it usually has team, pricing, and product detail you can't get otherwise.
-
-3. After the first webSearch, if results look relevant, IMMEDIATELY fetchUrl the most promising 1–2 URLs. Don't pile up generic searches before reading anything.
-
-4. If the country is FR, call companyLookup(name, "FR") once. If found, the legal name + founding date + activity code anchor everything else; surface them in your notes.
-
-5. If a search comes back empty, don't repeat the same query — vary it: drop a word, add a sector synonym ("logistics" vs "logistique" vs "delivery"), try the founder name from the company brief, or try a site:linkedin.com / site:societe.com filter.
-
-6. Stop after 4–7 useful tool calls. Diminishing returns past that.
-
-Be skeptical:
-- Zero public footprint after disambiguated searches → real risk flag (medium-to-high).
-- Website is a thin landing page / 404 / abandoned blog → risk flag (medium).
-- Pitch claims (MRR, headcount, customers) with NO corroboration → flag it as medium.
-- SIRENE entry inactive, in liquidation, or activity code mismatch → high severity.
-- BUT: a tiny SMB legitimately has a small footprint. "No Wikipedia article" is not a risk; "no website + no SIRENE + no LinkedIn" is.
-
-When you stop calling tools, write a plain-text findings note covering: overview, traction, team background, market context, risk flags (with severity), and the URLs you actually relied on. A separate pass will structure this into the final brief.`;
+THEN, only after the tool calls, write a short plain-text findings note covering: overview, traction, team, market context, risk flags (low/medium/high), and the URLs you actually visited. Be skeptical when public footprint is thin given pitch claims.`;
 
 const STRUCTURE_SYSTEM_PROMPT = `You are converting an investment analyst's research notes into a structured DD brief.
 
@@ -103,7 +89,7 @@ Rules:
   - "Pitch claims not corroborated" = medium.
   - "Active in registry, growing team" = no flag (positive).
 - sentimentScore: integer 0-100. Start at 70. Subtract 10-20 per medium risk, 20-30 per high. Add 5-10 per strong corroborated positive.
-- evidence: cite the URLs the agent actually called. Each gets source label, url, short excerpt.
+- evidence: cite EXACT urls the agent actually visited from the "URLS THE AGENT ACTUALLY VISITED" list at the bottom of the prompt. Copy them verbatim — never strip them down to a bare domain (no "linkedin.com", always the full "https://linkedin.com/in/<handle>"). If the agent made no tool calls, return an empty evidence array. Each cited source needs: source label (e.g. "LinkedIn — Thomas Despin", "Atelier Fiscal website", "SIRENE registry"), full url, and a one-sentence excerpt or finding tied to that source.
 
 Be honest. Don't invent. If the agent's notes are thin, the brief should say so.`;
 
@@ -231,16 +217,31 @@ export async function runDDAgent({
     detail: `${stepCounter} tool ${stepCounter === 1 ? "call" : "calls"}`,
   });
 
+  // Walk the agent's tool calls and pull out the EXACT URLs it visited.
+  // We pin these to the structuring step so the Sources section cites the
+  // real article/profile/registry pages instead of bare domains.
+  const usedSources = extractUsedSources(research.steps);
+
   const toolSummary = research.steps
     .flatMap((step) =>
       step.content
         .filter((p) => p.type === "tool-result")
         .map((p) => {
           const r = p as Extract<typeof p, { type: "tool-result" }>;
-          return `[tool ${r.toolName}] ${JSON.stringify(r.output).slice(0, 1500)}`;
+          return `[tool ${r.toolName}] ${JSON.stringify(r.output).slice(0, 2500)}`;
         })
     )
     .join("\n\n");
+
+  const sourcesList = usedSources.length
+    ? usedSources
+        .map((s, i) => {
+          const meta = [s.kind.toUpperCase(), s.title].filter(Boolean).join(" · ");
+          const excerpt = s.excerpt ? `\n   excerpt: ${s.excerpt}` : "";
+          return `[${i + 1}] ${meta}\n   url: ${s.url}${excerpt}`;
+        })
+        .join("\n")
+    : "(none — agent made no tool calls)";
 
   const findingsNote = [
     "ANALYST NOTES",
@@ -248,6 +249,9 @@ export async function runDDAgent({
     "",
     "RAW TOOL RESULTS",
     toolSummary || "(no tool results)",
+    "",
+    "URLS THE AGENT ACTUALLY VISITED (cite these EXACT urls in evidence — never bare domains):",
+    sourcesList,
   ].join("\n\n");
 
   onEvent?.({ type: "stage", id: "structure", label: "Structuring the brief" });
@@ -277,6 +281,74 @@ export async function runDDAgent({
   throw new Error("unreachable");
 }
 
+type UsedSource = {
+  kind: "web" | "url" | "registry";
+  url: string;
+  title?: string;
+  excerpt?: string;
+};
+
+// Walk the agent's research steps and pull out the actual URLs it touched.
+// We capture top webSearch hits (the model has those URLs available even if it
+// doesn't fetch them), every fetchUrl input, and a synthetic registry URL when
+// SIRENE returns a match. The result is fed back to the structuring step so
+// evidence cites real pages instead of bare domains.
+function extractUsedSources(
+  steps: Array<{ content: Array<unknown> }>
+): UsedSource[] {
+  const out: UsedSource[] = [];
+  const seen = new Set<string>();
+  const push = (s: UsedSource) => {
+    if (!s.url || seen.has(s.url)) return;
+    seen.add(s.url);
+    out.push(s);
+  };
+  for (const step of steps) {
+    for (const part of step.content) {
+      const p = part as {
+        type?: string;
+        toolName?: string;
+        input?: unknown;
+        output?: unknown;
+      };
+      if (p.type === "tool-call" && p.toolName === "fetchUrl") {
+        const inp = p.input as { url?: string } | undefined;
+        if (inp?.url) push({ kind: "url", url: inp.url });
+      }
+      if (p.type === "tool-result" && p.toolName === "webSearch") {
+        const arr = p.output as
+          | Array<{ url?: string; title?: string; content?: string }>
+          | undefined;
+        if (Array.isArray(arr)) {
+          for (const r of arr.slice(0, 3)) {
+            if (r.url) {
+              push({
+                kind: "web",
+                url: r.url,
+                title: r.title,
+                excerpt: r.content?.slice(0, 220),
+              });
+            }
+          }
+        }
+      }
+      if (p.type === "tool-result" && p.toolName === "companyLookup") {
+        const o = p.output as
+          | { found?: boolean; siren?: string; legalName?: string }
+          | undefined;
+        if (o?.found && o.siren) {
+          push({
+            kind: "registry",
+            url: `https://annuaire-entreprises.data.gouv.fr/entreprise/${o.siren}`,
+            title: o.legalName ? `SIRENE — ${o.legalName}` : "SIRENE registry",
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+
 function summariseToolResult(
   tool: "webSearch" | "fetchUrl" | "companyLookup",
   input: any,
@@ -302,9 +374,9 @@ function summariseToolResult(
       return `${(len / 1024).toFixed(1)} KB from ${hostnameSafe(input?.url)}`;
     }
     if (tool === "companyLookup") {
-      // companyLookup returns { found: true, ... } | { found: false, reason: string }.
+      // companyLookup returns { found: true, legalName, ... } | { found: false, reason }.
       if (result?.found) {
-        const legalName = result.legal_name ? ` — ${result.legal_name}` : "";
+        const legalName = result.legalName ? ` — ${result.legalName}` : "";
         return `match in SIRENE${legalName}`;
       }
       if (result?.reason === "non_FR_lookup_unsupported") return "non-FR (skipped)";
