@@ -171,14 +171,7 @@ export function MatchesClient({
             No matches passed the bar this run.
           </p>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Try widening sectors or countries on{" "}
-            <Link
-              href="/thesis"
-              className="text-brand underline-offset-2 hover:underline"
-            >
-              your profile
-            </Link>
-            .
+            Try widening sectors or countries in your thesis above.
           </p>
         </div>
       )}
@@ -392,13 +385,15 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
       href={`/campaign/${m.campaignId}`}
       className="group flex items-stretch gap-5 rounded-xl border border-border bg-card p-5 transition hover:border-foreground/30"
     >
-      <div className="flex w-16 shrink-0 flex-col items-center justify-center gap-1 border-r border-border pr-4">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          rank
-        </span>
-        <span className="text-xl font-semibold leading-none tabular-nums tracking-[-0.02em]">
-          {String(rank).padStart(2, "0")}
-        </span>
+      <div className="flex w-20 shrink-0 flex-col items-center justify-center gap-2 border-r border-border pr-4">
+        <div className="flex flex-col items-center">
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+            rank
+          </span>
+          <span className="text-xl font-semibold leading-none tabular-nums tracking-[-0.02em]">
+            {String(rank).padStart(2, "0")}
+          </span>
+        </div>
         <FitChip score={m.fitScore} />
       </div>
 
@@ -442,27 +437,31 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
 }
 
 /**
- * Compact fit "chip" instead of the previous oversized gauge ring.
- * Hover reveals a tooltip explaining what the score actually means.
+ * Fit badge: a complete colored ring around the score, tier-coloured.
+ * No partial gauge — just a solid filled circle disc.
  */
 function FitChip({ score }: { score: number }) {
   const tier =
     score >= 80
-      ? { label: "Strong", tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" }
+      ? { label: "Strong", text: "text-emerald-700 dark:text-emerald-400", ring: "border-emerald-500", bg: "bg-emerald-500/10" }
       : score >= 60
-        ? { label: "Good", tone: "bg-brand/15 text-brand border-brand/30" }
+        ? { label: "Good", text: "text-brand", ring: "border-brand", bg: "bg-brand/10" }
         : score >= 40
-          ? { label: "Marginal", tone: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" }
-          : { label: "Low", tone: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30" };
+          ? { label: "Marginal", text: "text-amber-700 dark:text-amber-400", ring: "border-amber-500", bg: "bg-amber-500/10" }
+          : { label: "Low", text: "text-rose-700 dark:text-rose-400", ring: "border-rose-500", bg: "bg-rose-500/10" };
 
   return (
     <span className="group/fit relative">
       <span
-        className={`inline-flex h-7 min-w-[2.5rem] items-center justify-center rounded-full border px-2 font-mono text-xs font-semibold tabular-nums ${tier.tone}`}
+        className={`flex h-12 w-12 flex-col items-center justify-center rounded-full border-2 ${tier.ring} ${tier.bg} ${tier.text}`}
       >
-        {score}
+        <span className="text-sm font-semibold leading-none tabular-nums">
+          {score}
+        </span>
+        <span className="mt-0.5 text-[8px] font-medium uppercase tracking-[0.16em] opacity-80">
+          fit
+        </span>
       </span>
-      {/* Tooltip with grade explanation */}
       <span
         role="tooltip"
         className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-30 w-56 -translate-x-1/2 rounded-lg border border-border bg-popover p-3 text-left text-[11px] shadow-lg opacity-0 transition group-hover/fit:opacity-100"

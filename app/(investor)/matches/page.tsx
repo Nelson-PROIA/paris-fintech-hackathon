@@ -1,8 +1,13 @@
-import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { getDb, getOrCreateInvestor } from "@/lib/db";
+import {
+  getDb,
+  getOrCreateInvestor,
+  listCountries,
+  listSectors,
+} from "@/lib/db";
 import type { MatchedItemHydrated } from "@/lib/ai/match";
 import { MatchesClient } from "./MatchesClient";
+import { ThesisClient } from "../thesis/ThesisClient";
 
 type MatchCacheRow = {
   investor_id: string;
@@ -13,10 +18,35 @@ type MatchCacheRow = {
 export default async function MatchesPage() {
   const user = await requireRole("investor");
   const investor = getOrCreateInvestor(user.id, user.display_name ?? user.email);
+  const allSectors = listSectors();
+  const allCountries = listCountries();
+
   const hasThesis =
     !!investor?.thesis_text ||
     !!investor?.sectors_json ||
     !!investor?.countries_json;
+
+  const initialThesis = {
+    thesisText: investor?.thesis_text ?? "",
+    sectors: investor?.sectors_json
+      ? (JSON.parse(investor.sectors_json) as string[])
+      : [],
+    countries: investor?.countries_json
+      ? (JSON.parse(investor.countries_json) as string[])
+      : [],
+    stages: investor?.stages_json
+      ? (JSON.parse(investor.stages_json) as Array<
+          "pre_revenue" | "early" | "growth"
+        >)
+      : [],
+    ticketMinEur: investor?.ticket_min_eur ?? null,
+    ticketMaxEur: investor?.ticket_max_eur ?? null,
+    totalCapitalEur: investor?.total_capital_eur ?? null,
+    riskTolerance: (investor?.risk_tolerance ?? "medium") as
+      | "low"
+      | "medium"
+      | "high",
+  };
 
   let cachedMatches: MatchedItemHydrated[] = [];
   let cachedAt: number | null = null;
@@ -40,43 +70,28 @@ export default async function MatchesPage() {
           Top deals, ranked by your thesis.
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Mistral Large reads your thesis, filters live campaigns, and ranks
-          the best fits with one-line reasoning per pick.
+          Type or speak your thesis. Mistral Large filters live campaigns and
+          ranks the best fits with one-line reasoning per pick.
         </p>
       </header>
 
-      {!hasThesis ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-12 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Set thesis
-          </span>
-          <h2 className="text-2xl font-semibold tracking-[-0.015em]">
-            No thesis on file
-          </h2>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            Tell us what you&apos;re looking for and we&apos;ll match you with
-            deals — sectors, countries, ticket size, in your own words.
-          </p>
-          <Link
-            href="/thesis"
-            className="mt-2 inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90"
-          >
-            Set up your thesis
-            <ArrowRight />
-          </Link>
-        </div>
-      ) : (
+      <section className="mb-6">
+        <ThesisClient
+          allSectors={allSectors}
+          allCountries={allCountries}
+          initial={initialThesis}
+        />
+      </section>
+
+      {hasThesis ? (
         <MatchesClient cachedMatches={cachedMatches} cachedAt={cachedAt} />
+      ) : (
+        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Type a thesis above (or hit the mic) to get your first ranked picks.
+          </p>
+        </div>
       )}
     </main>
-  );
-}
-
-function ArrowRight() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M5 12h14" />
-      <path d="m12 5 7 7-7 7" />
-    </svg>
   );
 }

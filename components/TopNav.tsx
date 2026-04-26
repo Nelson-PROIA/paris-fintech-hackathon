@@ -17,7 +17,6 @@ const INVESTOR_LINKS: NavLink[] = [
   { href: "/feed", label: "Feed" },
   { href: "/matches", label: "Matches" },
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/thesis", label: "Profile" },
 ];
 
 export function TopNav({ role }: { role: "smb" | "investor" }) {

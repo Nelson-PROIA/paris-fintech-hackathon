@@ -27,23 +27,28 @@ export default async function OnboardInvestorPage() {
   return (
     <>
       <TopNav role="investor" />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-10">
         <header className="mb-8 space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Onboarding
+          </p>
+          <h1 className="text-balance text-4xl font-semibold tracking-[-0.025em]">
             Investor onboarding
           </h1>
-          <p className="text-muted-foreground">
+          <p className="max-w-2xl text-muted-foreground">
             A few presets, two free-text fields and a thesis: the AI
             rephrases, you confirm. Everything stays editable.
           </p>
         </header>
 
-        <InvestorOnboardingFlow
-          initialData={initialData}
-          initialDocuments={initialDocuments}
-          initialEnrichment={initialEnrichment}
-          initialEnrichmentStatus={profile.enrichment_status as EnrichmentStatus}
-        />
+        <div className="max-w-3xl">
+          <InvestorOnboardingFlow
+            initialData={initialData}
+            initialDocuments={initialDocuments}
+            initialEnrichment={initialEnrichment}
+            initialEnrichmentStatus={profile.enrichment_status as EnrichmentStatus}
+          />
+        </div>
       </main>
     </>
   );
