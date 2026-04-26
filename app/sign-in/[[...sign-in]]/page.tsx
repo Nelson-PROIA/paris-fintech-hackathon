@@ -1,17 +1,13 @@
 import Link from "next/link";
 import { SignIn } from "@clerk/nextjs";
-import { LoanlyMark } from "@/components/ui/loanly-mark";
+import { LoanlyLogo } from "@/components/ui/loanly-mark";
 
 export default function SignInPage() {
   return (
     <main className="relative flex min-h-screen items-stretch">
       <aside className="relative hidden w-[44%] flex-col justify-between border-r border-border bg-card/40 p-10 md:flex">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]"
-        >
-          <LoanlyMark size={20} />
-          Loanly
+        <Link href="/" className="flex items-center transition hover:opacity-80">
+          <LoanlyLogo size="md" />
         </Link>
         <div className="space-y-5">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -40,10 +36,9 @@ export default function SignInPage() {
         <div className="w-full max-w-md space-y-6">
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 text-[15px] font-semibold tracking-[-0.02em] md:hidden"
+            className="flex items-center justify-center transition hover:opacity-80 md:hidden"
           >
-            <LoanlyMark size={18} />
-            Loanly
+            <LoanlyLogo size="md" />
           </Link>
           <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
             <SignIn

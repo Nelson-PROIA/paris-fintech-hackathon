@@ -3,7 +3,7 @@ import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getRoleFromClerk } from "@/lib/auth";
-import { LoanlyMark } from "@/components/ui/loanly-mark";
+import { LoanlyLogo } from "@/components/ui/loanly-mark";
 
 export default async function HomePage() {
   const { userId } = await auth();
@@ -19,12 +19,8 @@ export default async function HomePage() {
     <main className="relative">
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]"
-          >
-            <LoanlyMark size={20} />
-            Loanly
+          <Link href="/" className="flex items-center transition hover:opacity-80">
+            <LoanlyLogo size="md" />
           </Link>
           <div className="flex items-center gap-2">
             <SignInButton mode="modal">
@@ -117,6 +113,82 @@ export default async function HomePage() {
       </section>
 
       <section className="border-t border-border py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-2xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Two sides, one marketplace
+            </span>
+            <h2 className="mt-4 text-balance text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">
+              Built for the people who actually move European capital.
+            </h2>
+          </div>
+          <div className="mt-12 grid gap-5 md:grid-cols-2">
+            <SidePanel
+              eyebrow="For SMB founders"
+              title="Raise without writing a deck."
+              body="A single conversation with the onboarding agent extracts your business model, traction, runway, and use of funds. We pull SIRENE for French companies, scrape your site, and structure everything into a campaign in under three minutes."
+              points={[
+                "Conversational onboarding — no forms",
+                "AI-drafted pitch and use-of-funds copy",
+                "Optional collateral upload with proof-check",
+                "Multi-company, multi-campaign support",
+              ]}
+            />
+            <SidePanel
+              eyebrow="For investors"
+              title="Curated, not algorithmic."
+              body="Frame your thesis in your own words or by voice — sectors, geographies, ticket size, risk. The matcher streams ranked picks live with one-line reasoning, and a portfolio constructor turns your thesis into an allocation in seconds."
+              points={[
+                "Live thesis matching with cited reasoning",
+                "Agentic DD: web + registry + traction signals",
+                "Portfolio constructor with risk-aware sizing",
+                "Hourly-refreshed top picks per investor",
+              ]}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-card/30 py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-2xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Under the hood
+            </span>
+            <h2 className="mt-4 text-balance text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">
+              Four agents doing the boring 80%.
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Each surface ships its own AI workflow. They share a Mistral
+              Large core with a Cerebras Llama 3.3 fallback for hot demos.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Feature
+              tag="Onboarding"
+              title="Conversational SMB intake"
+              body="The agent rewrites raw founder answers into structured fields, extracts sectors and keywords, and ships a draft campaign."
+            />
+            <Feature
+              tag="Diligence"
+              title="DD analyst with tool calls"
+              body="Streams web search, page fetch, and SIRENE registry calls live, then synthesises a one-page brief with cited sources."
+            />
+            <Feature
+              tag="Matching"
+              title="Live thesis ranker"
+              body="Reads your thesis, filters 200+ live campaigns, and ranks the best fits with one-line reasoning per pick."
+            />
+            <Feature
+              tag="Portfolio"
+              title="Allocation constructor"
+              body="Turns capital + risk + sectors into a diversified allocation with rationale and risk profile in under 20 seconds."
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border py-20 sm:py-24">
         <div className="mx-auto max-w-5xl px-6">
           <div className="grid gap-8 sm:grid-cols-3">
             <Stat label="EU countries covered" value="7" />
@@ -126,11 +198,36 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="border-t border-border bg-card/40 py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="text-balance text-3xl font-semibold tracking-[-0.02em] sm:text-4xl">
+            Three minutes to your first match.
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            No demo call, no sales pitch — sign up, frame your thesis, and the
+            agent does the rest.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <SignUpButton mode="modal">
+              <button className="inline-flex h-11 items-center gap-2 rounded-md bg-foreground px-5 text-[15px] font-semibold text-background transition hover:opacity-90 active:translate-y-px">
+                Get started — free
+                <ArrowRight />
+              </button>
+            </SignUpButton>
+            <SignInButton mode="modal">
+              <button className="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-card px-5 text-[15px] font-medium transition hover:bg-accent">
+                I have an account
+              </button>
+            </SignInButton>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-border py-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <LoanlyMark size={16} />
-            <span>© Loanly · Paris Fintech Hackathon</span>
+            <LoanlyLogo size="sm" />
+            <span className="opacity-60">· Paris Fintech Hackathon</span>
           </div>
           <span>Built with Mistral Large · Next.js · Clerk</span>
         </div>
@@ -149,6 +246,70 @@ function Step({ n, title, body }: { n: string; title: string; body: string }) {
       <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
         {body}
       </p>
+    </div>
+  );
+}
+
+function SidePanel({
+  eyebrow,
+  title,
+  body,
+  points,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  points: string[];
+}) {
+  return (
+    <div className="flex h-full flex-col gap-4 rounded-xl border border-border bg-background p-7 transition hover:border-foreground/30">
+      <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-brand">
+        {eyebrow}
+      </span>
+      <h3 className="text-2xl font-semibold tracking-[-0.02em]">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+      <ul className="mt-1 space-y-2 border-t border-border pt-4 text-sm">
+        {points.map((p) => (
+          <li key={p} className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <span>{p}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Feature({
+  tag,
+  title,
+  body,
+}: {
+  tag: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex h-full flex-col gap-2 rounded-lg border border-border bg-background p-5 transition hover:border-foreground/30">
+      <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {tag}
+      </span>
+      <h3 className="text-base font-semibold tracking-[-0.01em]">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   );
 }
