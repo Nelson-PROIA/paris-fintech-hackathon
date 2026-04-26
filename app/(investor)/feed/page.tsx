@@ -3,7 +3,7 @@ import { listCampaigns, listSectors, listCountries } from "@/lib/db";
 import { FeedFilters } from "@/components/FeedFilters";
 import { SectorIcon } from "@/components/ui/sector-icon";
 import { Badge } from "@/components/ui/badge";
-import { fmtEur, flagFor } from "@/lib/format";
+import { fmtEur, humanize } from "@/lib/format";
 
 type SearchParams = {
   sector?: string | string[];
@@ -44,24 +44,18 @@ export default async function FeedPage({
   );
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto max-w-6xl px-6 py-10">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Badge variant="brand" className="mb-3 px-3 py-1">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand" />
-            </span>
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Live deal flow
-          </Badge>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-            Deals on the{" "}
-            <span className="serif-italic gradient-headline">desk</span>{" "}
-            today.
+          </p>
+          <h1 className="mt-2 text-balance text-4xl font-semibold tracking-[-0.025em]">
+            Deals on the desk today.
           </h1>
-          <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>
-              <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
+              <span className="font-semibold tabular-nums text-foreground">
                 {campaigns.length}
               </span>{" "}
               {campaigns.length === 1 ? "campaign" : "campaigns"}
@@ -69,7 +63,7 @@ export default async function FeedPage({
             </span>
             <span className="text-border">·</span>
             <span>
-              <span className="font-serif text-base font-semibold tracking-tight text-foreground tabular-nums">
+              <span className="font-semibold tabular-nums text-foreground">
                 {fmtEur(totalSeeking)}
               </span>{" "}
               seeking total
@@ -78,25 +72,22 @@ export default async function FeedPage({
         </div>
         <Link
           href="/matches"
-          className="surface inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lift"
+          className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-accent"
         >
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-75" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
           </span>
-          Show me my AI matches
+          AI matches for me
           <ArrowRight />
         </Link>
       </header>
 
       <FeedFilters allSectors={allSectors} allCountries={allCountries} />
 
-      <ul className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {campaigns.map((c, i) => (
-          <li
-            key={c.id}
-            className={`animate-fade-in-up stagger-${Math.min((i % 5) + 1, 5)}`}
-          >
+      <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {campaigns.map((c) => (
+          <li key={c.id}>
             <DealCard
               campaignId={c.id}
               campaignTitle={c.title}
@@ -113,9 +104,11 @@ export default async function FeedPage({
         ))}
       </ul>
       {campaigns.length === 0 && (
-        <div className="surface-paper mt-12 flex flex-col items-center gap-3 p-12 text-center">
-          <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">No results</span>
-          <p className="font-serif text-lg font-semibold">
+        <div className="mt-12 flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-12 text-center">
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            No results
+          </span>
+          <p className="text-base font-semibold">
             Nothing matches those filters yet.
           </p>
           <p className="max-w-sm text-sm text-muted-foreground">
@@ -158,17 +151,13 @@ function DealCard({
   return (
     <Link
       href={`/campaign/${campaignId}`}
-      className="surface group relative flex h-full flex-col gap-4 overflow-hidden p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-lift"
+      className="group flex h-full flex-col gap-4 rounded-xl border border-border bg-card p-5 transition hover:border-foreground/30"
     >
-      {/* Hover glow */}
-      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/10 opacity-0 blur-3xl transition group-hover:opacity-100" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/40 to-transparent opacity-0 transition group-hover:opacity-100" />
-
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <SectorIcon sector={sector} size="md" />
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold leading-tight">
+            <h2 className="truncate text-base font-semibold leading-tight tracking-[-0.01em]">
               {companyName}
             </h2>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -177,13 +166,10 @@ function DealCard({
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card/80 px-2 py-0.5 text-[11px] font-medium">
-            <span>{flagFor(country)}</span>
-            <span>{country ?? "—"}</span>
-          </span>
+          <Badge variant="outline">{country ?? "—"}</Badge>
           {ratingCount > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <span className="text-warning">★</span>
+              <span className="text-amber-500">★</span>
               <span className="tabular-nums">{ratingAvg.toFixed(1)}</span>
               <span>({ratingCount})</span>
             </span>
@@ -192,24 +178,24 @@ function DealCard({
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {sector && <Badge variant="brand">{sector}</Badge>}
-        {stage && <Badge>{stage}</Badge>}
+        {sector && <Badge variant="brand">{humanize(sector)}</Badge>}
+        {stage && <Badge>{humanize(stage)}</Badge>}
       </div>
 
       <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {pitch ?? "No description."}
       </p>
 
-      <div className="mt-auto flex items-end justify-between border-t border-border/60 pt-3">
+      <div className="mt-auto flex items-end justify-between border-t border-border pt-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Seeking
           </div>
-          <div className="mt-0.5 font-serif text-2xl font-semibold tabular-nums tracking-tight gradient-headline">
+          <div className="mt-0.5 text-2xl font-semibold tabular-nums tracking-[-0.02em]">
             {fmtEur(capitalSeeking)}
           </div>
         </div>
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-brand opacity-0 transition group-hover:opacity-100">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground opacity-0 transition group-hover:opacity-100">
           Open deal
           <ArrowRight />
         </span>

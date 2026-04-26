@@ -47,7 +47,7 @@ export default async function ThesisPage() {
       };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-6">
         <Badge variant="brand" className="mb-3 px-3 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-brand" />

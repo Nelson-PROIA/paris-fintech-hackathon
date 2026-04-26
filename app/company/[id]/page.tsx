@@ -41,7 +41,7 @@ export default async function CompanyPage({
     onboardingEnrichment !== null;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <Link
         href={backHref}
         className="text-sm text-muted-foreground hover:text-foreground"

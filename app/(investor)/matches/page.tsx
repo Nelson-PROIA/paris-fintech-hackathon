@@ -32,7 +32,7 @@ export default async function MatchesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <header className="mb-7">
         <Badge variant="brand" className="mb-3 px-3 py-1">
           <Spark />

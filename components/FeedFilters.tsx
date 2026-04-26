@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FilterChips } from "@/components/FilterChips";
-import { FilterModeTabs } from "@/components/FilterModeTabs";
 import { NaturalLanguageInput } from "@/components/NaturalLanguageInput";
 import type { FeedFilterParse } from "@/lib/ai/parse-query";
+import { humanize } from "@/lib/format";
 
 export function FeedFilters({
   allSectors,
@@ -29,8 +29,15 @@ export function FeedFilters({
 
   const [naturalText, setNaturalText] = useState("");
   const [parsedSummary, setParsedSummary] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "parsing">("idle");
   const [error, setError] = useState<string | null>(null);
+
+  const filterCount =
+    sectors.length +
+    countries.length +
+    (ticketMin ? 1 : 0) +
+    (ticketMax ? 1 : 0);
 
   function pushFilters(opts: {
     sectors: string[];
@@ -49,6 +56,7 @@ export function FeedFilters({
 
   function applyManual() {
     pushFilters({ sectors, countries, ticketMin, ticketMax });
+    setFiltersOpen(false);
   }
 
   function reset() {
@@ -57,6 +65,7 @@ export function FeedFilters({
     setTicketMin("");
     setTicketMax("");
     setNaturalText("");
+    setParsedSummary(null);
     router.push("/feed");
   }
 
@@ -106,121 +115,105 @@ export function FeedFilters({
     }
   }
 
-  const manualPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        applyManual();
-      }}
-      className="surface-paper space-y-5 p-5"
-    >
-      <Field label={`Sectors (${sectors.length || "any"})`}>
-        <FilterChips
-          options={allSectors}
-          selected={sectors}
-          onChange={setSectors}
-        />
-      </Field>
+  return (
+    <div className="space-y-3">
+      <NaturalLanguageInput
+        value={naturalText}
+        onChange={setNaturalText}
+        onSubmit={applyNatural}
+        onToggleFilters={() => setFiltersOpen((v) => !v)}
+        filtersOpen={filtersOpen}
+        filterCount={filterCount}
+        placeholder="Search deals — e.g. French SaaS under €300k"
+        status={status}
+      />
 
-      <Field label={`Countries (${countries.length || "any"})`}>
-        <FilterChips
-          options={allCountries}
-          selected={countries}
-          onChange={setCountries}
-        />
-      </Field>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Ticket min (€)">
-          <input
-            type="number"
-            value={ticketMin}
-            onChange={(e) => setTicketMin(e.target.value)}
-            min={0}
-            step={10000}
-            placeholder="any"
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-        <Field label="Ticket max (€)">
-          <input
-            type="number"
-            value={ticketMax}
-            onChange={(e) => setTicketMax(e.target.value)}
-            min={0}
-            step={10000}
-            placeholder="any"
-            className="w-full rounded-lg border border-border bg-card/80 px-3 py-2 text-sm shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-          />
-        </Field>
-      </div>
-
-      <div className="flex items-center justify-end gap-2 border-t border-border/60 pt-4">
-        <button
-          type="button"
-          onClick={reset}
-          className="rounded-lg border border-border bg-card/60 px-4 py-2 text-sm font-medium transition hover:border-brand/30 hover:bg-accent"
-        >
-          Reset
-        </button>
-        <button
-          type="submit"
-          className="gradient-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105"
-        >
-          Apply
-        </button>
-      </div>
-    </form>
-  );
-
-  const naturalPanel = (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void applyNatural();
-      }}
-      className="surface-paper space-y-4 p-5"
-    >
-      <Field label="Describe what you want, or click the mic to talk">
-        <NaturalLanguageInput
-          value={naturalText}
-          onChange={setNaturalText}
-          placeholder="e.g. French SaaS and agencies, tickets up to €300k. Or: artisan makers in Italy seeking under €200k."
-          rows={4}
-        />
-      </Field>
       {parsedSummary && (
-        <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs leading-relaxed">
-          <span className="font-semibold uppercase tracking-[0.18em] text-brand">
+        <div className="rounded-md border border-border bg-card px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+          <span className="font-medium uppercase tracking-[0.16em] text-brand">
             AI applied
           </span>
           <span className="mx-2 text-border">·</span>
           <span>{parsedSummary}</span>
         </div>
       )}
-      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-4">
-        {status === "parsing" && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-brand" />
-            parsing…
-          </span>
-        )}
-        <button
-          type="submit"
-          disabled={status === "parsing" || !naturalText.trim()}
-          className="gradient-brand inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-brand-foreground shadow-soft ring-1 ring-inset ring-white/20 transition hover:brightness-105 disabled:opacity-50"
-        >
-          {status === "parsing" ? "Parsing…" : "Apply"}
-        </button>
-      </div>
-    </form>
-  );
 
-  return (
-    <div>
-      <FilterModeTabs manual={manualPanel} natural={naturalPanel} />
+      {filtersOpen && (
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="space-y-4">
+            <Field label={`Sectors (${sectors.length || "any"})`}>
+              <FilterChips
+                options={allSectors}
+                selected={sectors}
+                onChange={setSectors}
+                renderLabel={humanize}
+              />
+            </Field>
+
+            <Field label={`Countries (${countries.length || "any"})`}>
+              <FilterChips
+                options={allCountries}
+                selected={countries}
+                onChange={setCountries}
+              />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Ticket min (€)">
+                <input
+                  type="number"
+                  value={ticketMin}
+                  onChange={(e) => setTicketMin(e.target.value)}
+                  min={0}
+                  step={10000}
+                  placeholder="any"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+              <Field label="Ticket max (€)">
+                <input
+                  type="number"
+                  value={ticketMax}
+                  onChange={(e) => setTicketMax(e.target.value)}
+                  min={0}
+                  step={10000}
+                  placeholder="any"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm transition focus:border-foreground/30 focus:outline-none"
+                />
+              </Field>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+              <button
+                type="button"
+                onClick={reset}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Reset all
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen(false)}
+                  className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={applyManual}
+                  className="rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:opacity-90"
+                >
+                  Apply filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && (
-        <p className="mt-2 text-sm text-destructive">{error}</p>
+        <p className="text-sm text-destructive">{error}</p>
       )}
     </div>
   );
@@ -234,8 +227,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </label>
       {children}
@@ -245,7 +238,8 @@ function Field({
 
 function summariseFeedParsed(p: FeedFilterParse): string {
   const bits: string[] = [];
-  if (p.sectors?.length) bits.push(`sectors: ${p.sectors.join(", ")}`);
+  if (p.sectors?.length)
+    bits.push(`sectors: ${p.sectors.map(humanize).join(", ")}`);
   if (p.countries?.length) bits.push(`countries: ${p.countries.join(", ")}`);
   if (p.ticketMin != null)
     bits.push(`min €${p.ticketMin.toLocaleString("en-GB")}`);

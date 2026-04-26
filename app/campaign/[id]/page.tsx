@@ -65,7 +65,7 @@ export default async function CampaignPage({
         : "default";
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-6xl px-6 py-10">
       <Link
         href={backHref}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"

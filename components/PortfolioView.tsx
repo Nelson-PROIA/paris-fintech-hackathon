@@ -143,7 +143,7 @@ export function PortfolioView({ result }: { result: PortfolioResult }) {
                       </td>
                       <td className="px-3 py-3 text-xs">
                         <span className="inline-flex items-center gap-1">
-                          <span>{flagFor(co.country)}</span>
+                          <span aria-hidden></span>
                           <span>{co.country ?? "—"}</span>
                         </span>
                       </td>

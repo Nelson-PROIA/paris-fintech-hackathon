@@ -264,7 +264,7 @@ export function ThesisClient({
           value={thesisText}
           onChange={(e) => setThesisText(e.target.value)}
           placeholder="e.g. Cash-flow-positive European B2B SMBs, sub-€500k tickets, 3-year hold."
-          rows={3}
+          
           className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
       </Field>
@@ -300,7 +300,7 @@ export function ThesisClient({
           value={naturalText}
           onChange={setNaturalText}
           placeholder="e.g. I want profitable European B2B SaaS and agencies in France and Benelux. Tickets €100k–500k, 3-year hold, low risk."
-          rows={5}
+          
         />
       </Field>
 

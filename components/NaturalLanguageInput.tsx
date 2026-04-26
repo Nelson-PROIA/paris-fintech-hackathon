@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, SlidersHorizontal, ArrowUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
@@ -15,11 +15,8 @@ type SpeechRecognitionLike = {
     | ((event: { results: { 0: { transcript: string } }[] }) => void)
     | null;
   onend: (() => void) | null;
-  onerror:
-    | ((event: { error: string }) => void)
-    | null;
+  onerror: ((event: { error: string }) => void) | null;
 };
-
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
 declare global {
@@ -29,24 +26,47 @@ declare global {
   }
 }
 
+/**
+ * Chat-style single-line input bar. Inspired by ChatGPT/Linear command bar:
+ *
+ *   [ filter ]  ask anything…  [ mic ]  [ ↑ ]
+ *
+ * Use this everywhere we previously had a tall labelled textarea +
+ * "Plain English / Manual filters" tabs. The optional filter button
+ * toggles a manual-filter panel rendered by the parent.
+ */
 export function NaturalLanguageInput({
   value,
   onChange,
-  placeholder,
-  rows = 3,
+  onSubmit,
+  onToggleFilters,
+  filtersOpen,
+  filterCount,
+  placeholder = "Ask anything…",
+  status = "idle",
+  disabled,
   lang = "en-GB",
+  className,
 }: {
   value: string;
   onChange: (v: string) => void;
+  onSubmit?: () => void;
+  /** Show + wire a filter (sliders) button on the left when provided */
+  onToggleFilters?: () => void;
+  filtersOpen?: boolean;
+  filterCount?: number;
   placeholder?: string;
-  rows?: number;
+  /** "parsing" puts a subtle pulse behind the bar */
+  status?: "idle" | "parsing" | "loading";
+  disabled?: boolean;
   lang?: string;
+  className?: string;
 }) {
   const [isListening, setIsListening] = useState(false);
   const [supported, setSupported] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const baseTextRef = useRef("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -66,10 +86,7 @@ export function NaturalLanguageInput({
       onChange(merged);
     };
     r.onend = () => setIsListening(false);
-    r.onerror = (e) => {
-      setError(e.error);
-      setIsListening(false);
-    };
+    r.onerror = () => setIsListening(false);
     recognitionRef.current = r;
     setSupported(true);
     return () => {
@@ -82,10 +99,9 @@ export function NaturalLanguageInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
-  function toggle() {
+  function toggleMic() {
     const r = recognitionRef.current;
     if (!r) return;
-    setError(null);
     if (isListening) {
       r.stop();
     } else {
@@ -93,54 +109,88 @@ export function NaturalLanguageInput({
       try {
         r.start();
         setIsListening(true);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+      } catch {
+        // already running
       }
     }
   }
 
+  const submitting = status === "parsing" || status === "loading";
+
   return (
-    <div className="space-y-1">
-      <div className="group relative">
-        {/* Decorative gradient ring on focus */}
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute inset-0 rounded-xl opacity-0 transition group-focus-within:opacity-100",
-            "bg-gradient-to-br from-brand/30 via-chart-4/20 to-warning/20 blur"
-          )}
-        />
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={rows}
-          className="relative w-full resize-y rounded-xl border border-border bg-card/80 px-4 py-3 pr-14 text-sm leading-relaxed shadow-soft transition placeholder:text-muted-foreground/70 focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
-        />
-        {supported && (
-          <button
-            type="button"
-            onClick={toggle}
-            title={isListening ? "Stop listening" : "Speak"}
-            aria-label={isListening ? "Stop listening" : "Speak"}
-            className={cn(
-              "absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full transition-all",
-              isListening
-                ? "bg-destructive text-white shadow-lift animate-glow-pulse"
-                : "border border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-brand"
-            )}
-          >
-            {isListening ? <MicOff size={15} /> : <Mic size={15} />}
-          </button>
-        )}
-      </div>
-      {!supported && (
-        <p className="text-xs text-muted-foreground">
-          Voice input not supported in this browser. Try Chrome or Edge — or
-          just type.
-        </p>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!value.trim() || submitting) return;
+        onSubmit?.();
+      }}
+      className={cn(
+        "relative flex items-center gap-1.5 rounded-full border border-border bg-card px-1.5 py-1.5 shadow-sm transition focus-within:border-foreground/30 focus-within:shadow",
+        submitting && "border-brand/40",
+        className
       )}
-      {error && <p className="text-xs text-destructive">Mic: {error}</p>}
-    </div>
+    >
+      {onToggleFilters && (
+        <button
+          type="button"
+          onClick={onToggleFilters}
+          aria-pressed={filtersOpen}
+          aria-label="Toggle filters"
+          className={cn(
+            "ml-0.5 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition",
+            filtersOpen || (filterCount ?? 0) > 0
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+        >
+          <SlidersHorizontal size={13} />
+          {filterCount && filterCount > 0 ? (
+            <span className="font-mono tabular-nums">{filterCount}</span>
+          ) : (
+            <span>Filters</span>
+          )}
+        </button>
+      )}
+
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled || submitting}
+        className="min-w-0 flex-1 bg-transparent px-3 py-1.5 text-[14px] outline-none placeholder:text-muted-foreground/70 disabled:opacity-60"
+      />
+
+      {supported && (
+        <button
+          type="button"
+          onClick={toggleMic}
+          title={isListening ? "Stop listening" : "Speak"}
+          aria-label={isListening ? "Stop listening" : "Speak"}
+          className={cn(
+            "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition",
+            isListening
+              ? "bg-destructive text-white animate-pulse-soft"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+        >
+          {isListening ? <MicOff size={15} /> : <Mic size={15} />}
+        </button>
+      )}
+
+      <button
+        type="submit"
+        disabled={!value.trim() || submitting || disabled}
+        aria-label="Submit"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition disabled:bg-muted disabled:text-muted-foreground/50"
+      >
+        {submitting ? (
+          <span className="inline-flex h-1.5 w-1.5 animate-pulse-soft rounded-full bg-current" />
+        ) : (
+          <ArrowUp size={16} strokeWidth={2.5} />
+        )}
+      </button>
+    </form>
   );
 }

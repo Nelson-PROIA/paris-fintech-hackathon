@@ -468,7 +468,7 @@ function MatchCard({ m, rank }: { m: MatchedItemHydrated; rank: number }) {
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <Badge variant="ghost">
-            <span>{flagFor(co.country)}</span>
+            <span aria-hidden></span>
             <span>{co.country ?? "—"}</span>
           </Badge>
           {co.sector && <Badge variant="brand">{humanize(co.sector)}</Badge>}

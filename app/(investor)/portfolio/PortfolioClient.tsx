@@ -225,7 +225,7 @@ export function PortfolioClient({
           value={thesisText}
           onChange={(e) => setThesisText(e.target.value)}
           placeholder="e.g. Cash-flow-positive European SMBs in B2B services and SaaS, sub-€500k tickets, 3-year hold."
-          rows={3}
+          
           className="w-full resize-y rounded-lg border border-border bg-card/80 px-3 py-2 text-sm leading-relaxed shadow-soft transition focus:border-brand/40 focus:outline-none focus:ring-1 focus:ring-brand/30"
         />
       </Field>
@@ -270,7 +270,7 @@ export function PortfolioClient({
           value={naturalText}
           onChange={setNaturalText}
           placeholder="e.g. €2 million across French B2B SaaS and agencies. Low risk, profitable companies, max 12 positions, 3-year hold."
-          rows={5}
+          
         />
       </Field>
 

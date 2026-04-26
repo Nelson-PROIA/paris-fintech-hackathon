@@ -2,14 +2,20 @@
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Toggle pill chips. `renderLabel` lets callers humanise enum values
+ * without losing the underlying value (e.g. saas_micro → "SaaS").
+ */
 export function FilterChips({
   options,
   selected,
   onChange,
+  renderLabel = (s) => s,
 }: {
   options: string[];
   selected: string[];
   onChange: (next: string[]) => void;
+  renderLabel?: (opt: string) => string;
 }) {
   function toggle(opt: string) {
     onChange(
@@ -29,10 +35,10 @@ export function FilterChips({
             type="button"
             onClick={() => toggle(opt)}
             className={cn(
-              "group inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200",
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
               active
-                ? "border-brand/40 bg-brand-muted text-brand-foreground shadow-soft ring-1 ring-inset ring-white/30 dark:bg-brand-muted/60 dark:text-foreground"
-                : "border-border bg-card/60 text-muted-foreground hover:border-brand/30 hover:bg-accent hover:text-foreground"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-card text-foreground hover:bg-accent"
             )}
             aria-pressed={active}
           >
@@ -47,12 +53,11 @@ export function FilterChips({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden
-                className="text-brand"
               >
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             )}
-            {opt}
+            {renderLabel(opt)}
           </button>
         );
       })}

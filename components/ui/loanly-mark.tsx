@@ -1,9 +1,44 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Loanly logomark — geometric, minimal, no circle, no letter-in-shape.
- * Two stacked bars + a thin diagonal "lift" stroke representing capital flow.
- * Pairs with the "Loanly" wordmark.
+ * Wordmark-only Loanly logo. No symbol, no circle, no letter-in-shape.
+ * The brand IS the typography. Tight tracking, optical-size adjusted.
+ *
+ * Renders as inline-flex span so it composes cleanly inside links/buttons.
+ */
+export function LoanlyLogo({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClass =
+    size === "sm"
+      ? "text-[14px]"
+      : size === "lg"
+        ? "text-[22px]"
+        : "text-[16px]";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-baseline font-semibold tracking-[-0.04em]",
+        sizeClass,
+        className
+      )}
+    >
+      <span>Loanly</span>
+      <span className="text-brand" aria-hidden>
+        .
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Backwards-compat shim for callers still importing the symbol-only mark.
+ * Kept so existing pages keep building — renders the dot-period accent only.
+ * New code should use LoanlyLogo directly.
  */
 export function LoanlyMark({
   className,
@@ -13,56 +48,13 @@ export function LoanlyMark({
   size?: number;
 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
+    <span
+      className={cn(
+        "inline-block rounded-sm bg-brand",
+        className
+      )}
+      style={{ width: Math.round(size / 5), height: size, aspectRatio: "1 / 5" }}
       aria-hidden
-      className={cn("shrink-0 text-foreground", className)}
-    >
-      {/* Tall stem (the "L" stroke, but freed from a frame) */}
-      <rect x="3" y="3" width="3" height="18" rx="1.2" fill="currentColor" />
-      {/* Base bar */}
-      <rect x="3" y="18" width="13" height="3" rx="1.2" fill="currentColor" />
-      {/* Brand-tinted ascending stroke — represents capital lifting */}
-      <rect
-        x="9"
-        y="3"
-        width="3"
-        height="11"
-        rx="1.2"
-        fill="currentColor"
-        opacity="0.35"
-      />
-      <rect
-        x="15"
-        y="9"
-        width="3"
-        height="9"
-        rx="1.2"
-        fill="var(--brand, currentColor)"
-      />
-    </svg>
-  );
-}
-
-/**
- * Full lockup: mark + wordmark. Use in nav, footer, sign-in side panel.
- */
-export function LoanlyLogo({
-  className,
-  size = 18,
-}: {
-  className?: string;
-  size?: number;
-}) {
-  return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <LoanlyMark size={size} />
-      <span className="text-[15px] font-semibold tracking-[-0.02em]">
-        Loanly
-      </span>
-    </span>
+    />
   );
 }

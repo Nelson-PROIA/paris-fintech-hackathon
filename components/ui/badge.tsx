@@ -2,20 +2,22 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-tight transition",
+  "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-[-0.005em] transition",
   {
     variants: {
       variant: {
-        default: "border-border bg-secondary text-secondary-foreground",
-        outline: "border-border bg-transparent text-muted-foreground",
+        default:
+          "border-border bg-secondary text-foreground",
+        outline:
+          "border-border bg-transparent text-foreground",
         brand:
-          "border-brand/30 bg-brand-muted text-brand-foreground dark:bg-brand-muted/50 dark:text-foreground",
+          "border-brand/40 bg-brand-muted text-foreground dark:bg-brand-muted/50",
         success:
-          "border-success/30 bg-success/10 text-success dark:text-success",
+          "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/15 dark:text-emerald-300",
         warning:
-          "border-warning/30 bg-warning/10 text-warning dark:text-warning",
+          "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/15 dark:text-amber-300",
         danger:
-          "border-destructive/30 bg-destructive/10 text-destructive dark:text-destructive",
+          "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:border-rose-400/40 dark:bg-rose-400/15 dark:text-rose-300",
         ghost: "border-transparent bg-transparent text-muted-foreground",
       },
     },
